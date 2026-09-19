@@ -14,6 +14,7 @@
 - `supabase/migrations/0001_initial.sql`
 - `supabase/migrations/0002_submit_attempt.sql`
 - `supabase/migrations/0003_rls_fixes.sql`
+- `supabase/migrations/0005_public_grants.sql` (أذونات الجداول المطلوبة)
 - `supabase/seed.sql` (بيانات أولية)
 
 > **البديل الأسهل:** انسخ محتوى ملف **`supabase/apply_all.sql`** مرة واحدة والصقه في SQL Editor ثم Run —

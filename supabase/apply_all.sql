@@ -459,6 +459,21 @@ create policy "users view own admin row" on public.admin_users
   using (user_id = auth.uid());
 -- <<< End of 0003 >>>
 
+-- <<< Start of 0005_public_grants.sql >>>
+grant select on public.quiz_settings to anon, authenticated;
+
+grant select, insert, update, delete on public.categories       to authenticated;
+grant select, insert, update, delete on public.questions        to authenticated;
+grant select, insert, update, delete on public.question_options to authenticated;
+grant select, insert, update, delete on public.quiz_settings    to authenticated;
+
+grant select on public.quiz_attempts      to authenticated;
+grant select on public.attempt_questions  to authenticated;
+grant select on public.attempt_answers    to authenticated;
+
+grant select on public.admin_users to authenticated;
+-- <<< End of 0005 >>>
+
 -- <<< Start of seed.sql >>>
 create or replace function public.seed_question(cat uuid, q text, expl text, opts text[], correct_idx int)
 returns void language plpgsql as $$
