@@ -1,0 +1,180 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-primary: #0d9488;
+  --color-on-primary: #ffffff;
+  --color-secondary: #2dd4bf;
+  --color-background: #f0fdfa;
+  --color-foreground: #134e4a;
+  --color-card: #ffffff;
+  --color-card-foreground: #134e4a;
+  --color-muted: #e8f1f4;
+  --color-muted-foreground: #475569;
+  --color-border: #5eead4;
+  --color-accent: #d97706;
+  --color-destructive: #dc2626;
+  --color-success: #16a34a;
+  --color-ring: #0d9488;
+  --color-accounting: #16a34a;
+  --color-iq: #7c3aed;
+  --color-excel: #ea580c;
+
+  --font-heading: 'Cairo', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Tajawal', ui-sans-serif, system-ui, sans-serif;
+
+  --radius-card: 1rem;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    color: var(--color-foreground);
+    background-color: var(--color-background);
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5 {
+    font-family: var(--font-heading);
+  }
+
+  :focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--color-background), 0 0 0 4px var(--color-ring);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  .card {
+    background-color: var(--color-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    color: var(--color-card-foreground);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 0.75rem;
+    padding: 0.625rem 1.25rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 150ms ease, background-color 150ms ease, color 150ms ease;
+  }
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .btn-primary {
+    background-color: var(--color-primary);
+    color: var(--color-on-primary);
+  }
+  .btn-primary:not(:disabled):hover {
+    opacity: 0.9;
+  }
+
+  .btn-outline {
+    border: 1px solid var(--color-border);
+    background-color: var(--color-card);
+    color: var(--color-foreground);
+  }
+  .btn-outline:not(:disabled):hover {
+    background-color: var(--color-muted);
+  }
+
+  .btn-ghost {
+    background-color: transparent;
+    color: var(--color-primary);
+  }
+  .btn-ghost:not(:disabled):hover {
+    background-color: var(--color-muted);
+  }
+
+  .btn-danger {
+    background-color: var(--color-destructive);
+    color: #ffffff;
+  }
+  .btn-danger:not(:disabled):hover {
+    opacity: 0.9;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    border-radius: 9999px;
+    padding: 0.125rem 0.625rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1.5;
+  }
+
+  .badge-accounting {
+    background-color: rgb(22 163 74 / 0.12);
+    color: #15803d;
+  }
+  .badge-iq {
+    background-color: rgb(124 58 237 / 0.12);
+    color: #6d28d9;
+  }
+  .badge-excel {
+    background-color: rgb(234 88 12 / 0.12);
+    color: #c2410c;
+  }
+  .badge-muted {
+    background-color: var(--color-muted);
+    color: var(--color-muted-foreground);
+  }
+  .badge-success {
+    background-color: rgb(22 163 74 / 0.12);
+    color: #15803d;
+  }
+  .badge-destructive {
+    background-color: rgb(220 38 38 / 0.12);
+    color: #b91c1c;
+  }
+
+  .input {
+    width: 100%;
+    border: 1px solid var(--color-border);
+    border-radius: 0.75rem;
+    padding: 0.625rem 0.875rem;
+    background-color: var(--color-card);
+    color: var(--color-foreground);
+    transition: border-color 150ms ease;
+  }
+  .input::placeholder {
+    color: var(--color-muted-foreground);
+  }
+
+  .label {
+    display: block;
+    margin-bottom: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 700;
+  }
+}
