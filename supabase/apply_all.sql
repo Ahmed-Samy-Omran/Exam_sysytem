@@ -688,6 +688,9 @@ create index if not exists idx_exam_sections_exam on public.exam_sections(exam_i
 alter table public.quiz_attempts
   add column if not exists exam_id uuid references public.exams(id) on delete set null;
 
+alter table public.quiz_attempts
+  add column if not exists passing_score numeric(5,2) default 70.00;
+
 create index if not exists idx_attempts_exam on public.quiz_attempts(exam_id) where exam_id is not null;
 
 -- ---------- 4) Updated create_candidate_attempt (backward-compatible) ----------

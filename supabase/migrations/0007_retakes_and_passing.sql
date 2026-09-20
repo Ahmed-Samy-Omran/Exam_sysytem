@@ -11,6 +11,10 @@
 --    dashboards can use the admin-configured threshold.
 -- 3) Re-grant EXECUTE (drop + create revokes grants).
 
+-- ---------- 0) column needed by this migration ----------
+alter table public.quiz_attempts
+  add column if not exists passing_score numeric(5,2) default 70.00;
+
 -- ---------- 1) create_candidate_attempt ----------
 drop function if exists public.create_candidate_attempt(text, text, uuid);
 
