@@ -38,7 +38,7 @@ export interface ExamRepository {
 
   // ---- إدارة (المدير) ----
   isAdmin(): Promise<boolean>
-  signInAdmin(email: string, password: string): Promise<void>
+  signInAdmin(username: string, password: string): Promise<void>
   signOutAdmin(): Promise<void>
   listCategoriesAdmin(): Promise<Category[]>
   saveCategory(cat: { id?: string; name: string; slug: string; description: string; accent_color: string; is_active: boolean }): Promise<Category>

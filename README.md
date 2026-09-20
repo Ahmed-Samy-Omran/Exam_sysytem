@@ -28,7 +28,7 @@ npm run dev
 
 - المتقدم: `http://localhost:5173`
 - لوحة الإدارة (وضع المحاكاة): `http://localhost:5173/#/admin/login`
-  - البريد: `admin@example.com` | كلمة المرور: `admin123`
+  - name: `omar` | كلمة المرور: `omar369@`
 
 ## التحقق
 

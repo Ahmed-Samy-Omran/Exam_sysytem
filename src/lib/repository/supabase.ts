@@ -262,8 +262,8 @@ export class SupabaseRepository implements ExamRepository {
     return Boolean(rows)
   }
 
-  async signInAdmin(email: string, password: string): Promise<void> {
-    const { error } = await this.sb.auth.signInWithPassword({ email, password })
+  async signInAdmin(username: string, password: string): Promise<void> {
+    const { error } = await this.sb.auth.signInWithPassword({ email: username, password })
     if (error) throw new Error('بيانات الدخول غير صحيحة')
   }
 

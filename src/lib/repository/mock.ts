@@ -12,7 +12,7 @@ import type { ExamRepository, QuestionFilter, QuizSetupItem, Stats } from '@/lib
 import { createQuiz, gradeQuiz } from '@/lib/quiz-engine'
 import { MOCK_CATEGORIES, MOCK_QUESTIONS, MOCK_SETTINGS } from '@/lib/mock/seedData'
 
-const DEMO_ADMIN = { email: 'admin@example.com', password: 'admin123' }
+const DEMO_ADMIN = { name: 'omar', password: 'omar369@' }
 
 interface MockExamSection {
   category_id: string
@@ -335,8 +335,8 @@ export class MockRepository implements ExamRepository {
     return this.session
   }
 
-  async signInAdmin(email: string, password: string): Promise<void> {
-    if (email === DEMO_ADMIN.email && password === DEMO_ADMIN.password) {
+  async signInAdmin(username: string, password: string): Promise<void> {
+    if (username === DEMO_ADMIN.name && password === DEMO_ADMIN.password) {
       this.session = true
       return
     }
