@@ -104,7 +104,7 @@ begin
     loop
       opts := '[]'::jsonb;
       for opt_rec in
-        select o.id, o.option_text
+        select o.id, o.option_text, o.sort_order
         from public.question_options o
         where o.question_id = q_rec.id
         order by random()

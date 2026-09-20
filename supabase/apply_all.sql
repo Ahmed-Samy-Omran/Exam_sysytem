@@ -168,7 +168,7 @@ begin
     loop
       opts := '[]'::jsonb;
       for opt_rec in
-        select o.id, o.option_text
+        select o.id, o.option_text, o.sort_order
         from public.question_options o
         where o.question_id = q_rec.id
         order by random()
@@ -270,34 +270,41 @@ alter table public.attempt_questions enable row level security;
 alter table public.attempt_answers   enable row level security;
 alter table public.admin_users      enable row level security;
 
+drop policy if exists "admin manages categories" on public.categories;
 create policy "admin manages categories" on public.categories
   for all to authenticated
   using (exists (select 1 from public.admin_users au where au.user_id = auth.uid()))
   with check (exists (select 1 from public.admin_users au where au.user_id = auth.uid()));
 
+drop policy if exists "admin manages questions" on public.questions;
 create policy "admin manages questions" on public.questions
   for all to authenticated
   using (exists (select 1 from public.admin_users au where au.user_id = auth.uid()))
   with check (exists (select 1 from public.admin_users au where au.user_id = auth.uid()));
 
+drop policy if exists "admin manages options" on public.question_options;
 create policy "admin manages options" on public.question_options
   for all to authenticated
   using (exists (select 1 from public.admin_users au where au.user_id = auth.uid()))
   with check (exists (select 1 from public.admin_users au where au.user_id = auth.uid()));
 
+drop policy if exists "admin manages settings" on public.quiz_settings;
 create policy "admin manages settings" on public.quiz_settings
   for all to authenticated
   using (exists (select 1 from public.admin_users au where au.user_id = auth.uid()))
   with check (exists (select 1 from public.admin_users au where au.user_id = auth.uid()));
 
+drop policy if exists "admin reads attempts" on public.quiz_attempts;
 create policy "admin reads attempts" on public.quiz_attempts
   for select to authenticated
   using (exists (select 1 from public.admin_users au where au.user_id = auth.uid()));
 
+drop policy if exists "admin reads attempt questions" on public.attempt_questions;
 create policy "admin reads attempt questions" on public.attempt_questions
   for select to authenticated
   using (exists (select 1 from public.admin_users au where au.user_id = auth.uid()));
 
+drop policy if exists "admin reads attempt answers" on public.attempt_answers;
 create policy "admin reads attempt answers" on public.attempt_answers
   for select to authenticated
   using (exists (select 1 from public.admin_users au where au.user_id = auth.uid()));
@@ -561,7 +568,7 @@ begin
     loop
       opts := '[]'::jsonb;
       for opt_rec in
-        select o.id, o.option_text
+        select o.id, o.option_text, o.sort_order
         from public.question_options o
         where o.question_id = q_rec.id
         order by random()
@@ -804,7 +811,7 @@ begin
     loop
       opts := '[]'::jsonb;
       for opt_rec in
-        select o.id, o.option_text
+        select o.id, o.option_text, o.sort_order
         from public.question_options o
         where o.question_id = q_rec.id
         order by random()
@@ -845,19 +852,23 @@ end;
 $$;
 
 -- ---------- 5) RLS ----------
+drop policy if exists "anon reads active exams" on public.exams;
 create policy "anon reads active exams" on public.exams
   for select to anon, authenticated
   using (is_active = true);
 
+drop policy if exists "anon reads exam sections via exam" on public.exam_sections;
 create policy "anon reads exam sections via exam" on public.exam_sections
   for select to anon, authenticated
   using (exists (select 1 from public.exams e where e.id = exam_id and e.is_active = true));
 
+drop policy if exists "admin manages exams" on public.exams;
 create policy "admin manages exams" on public.exams
   for all to authenticated
   using (exists (select 1 from public.admin_users au where au.user_id = auth.uid()))
   with check (exists (select 1 from public.admin_users au where au.user_id = auth.uid()));
 
+drop policy if exists "admin manages exam sections" on public.exam_sections;
 create policy "admin manages exam sections" on public.exam_sections
   for all to authenticated
   using (exists (select 1 from public.admin_users au where au.user_id = auth.uid()))
@@ -1059,7 +1070,7 @@ begin
     loop
       opts := '[]'::jsonb;
       for opt_rec in
-        select o.id, o.option_text
+        select o.id, o.option_text, o.sort_order
         from public.question_options o
         where o.question_id = q_rec.id
         order by random()
