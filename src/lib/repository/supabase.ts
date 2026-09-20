@@ -327,16 +327,16 @@ export class SupabaseRepository implements ExamRepository {
       const { error: optErr } = await this.sb.from('question_options').insert(insertOpts)
       if (optErr) throw optErr
       const { data: full } = await this.sb.from('questions').select('*').eq('id', id).single()
-      return {
+   return {
         ...(upd ?? (full as Question)),
         options: draft.options.map((o, i) => ({
-          id: `${id}-o${i}`,
-          question_id: id,
-          option_text: o.option_text,
-          is_correct: o.is_correct,
-          sort_order: i,
+            id: `${id}-o${i}`,
+            question_id: id,
+            option_text: o.option_text,
+            is_correct: o.is_correct,
+            sort_order: i,
         })),
-      }
+    };
     }
     const user = (await this.sb.auth.getUser()).data.user
     const { data, error } = await this.sb
