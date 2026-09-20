@@ -194,6 +194,7 @@ export interface Database {
         Args: {
           p_name: string
           p_email?: string | null
+          p_exam_id?: string | null
         }
         Returns: unknown
       }

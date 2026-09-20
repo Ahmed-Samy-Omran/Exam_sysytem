@@ -43,7 +43,7 @@ export function HomePage() {
           وشرح الإجابة الصحيحة.
         </p>
         <div className="mt-8 flex items-center justify-center gap-3">
-          <LinkButton to="/quiz/setup">
+          <LinkButton to="/exam/start?exam=demo-exam">
             <Play className="h-5 w-5" />
             ابدأ الاختبار
           </LinkButton>

@@ -51,5 +51,7 @@ export interface ExamRepository {
   getRecentAttempts(limit: number): Promise<AttemptRow[]>
 
   // ---- Candidate entry ----
-  createCandidateAttempt(name: string, email?: string): Promise<{ attempt_id: string; candidate_name: string; candidate_email: string; status: string; started_at: string }>
+  createCandidateAttempt(name: string, email?: string, examId?: string): Promise<{ attempt_id: string; candidate_name: string; candidate_email: string; status: string; started_at: string }>
+  getExamBySlug(slug: string): Promise<{ id: string; title: string; description: string | null; instructions: string; is_active: boolean; passing_score: number; time_limit_minutes: number | null; allow_retakes: boolean } | null>
+  getExamById(id: string): Promise<{ id: string; title: string; description: string | null; instructions: string; is_active: boolean; passing_score: number; time_limit_minutes: number | null; allow_retakes: boolean } | null>
 }

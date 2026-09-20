@@ -14,6 +14,24 @@ import { MOCK_CATEGORIES, MOCK_QUESTIONS, MOCK_SETTINGS } from '@/lib/mock/seedD
 
 const DEMO_ADMIN = { email: 'admin@example.com', password: 'admin123' }
 
+interface MockExamSection {
+  category_id: string
+  question_count: number
+}
+
+interface MockExam {
+  id: string
+  title: string
+  description: string | null
+  instructions: string
+  slug: string
+  is_active: boolean
+  passing_score: number
+  time_limit_minutes: number | null
+  allow_retakes: boolean
+  sections: MockExamSection[]
+}
+
 interface MockAttempt {
   attemptId: string
   quiz: Quiz
@@ -24,6 +42,7 @@ interface MockAttempt {
   submittedAt: string | null
   candidateName?: string
   candidateEmail?: string
+  examId?: string
 }
 
 export class MockRepository implements ExamRepository {
@@ -31,7 +50,35 @@ export class MockRepository implements ExamRepository {
   private questions: Question[] = JSON.parse(JSON.stringify(MOCK_QUESTIONS))
   private settings: QuizSettings[] = JSON.parse(JSON.stringify(MOCK_SETTINGS))
   private attempts = new Map<string, MockAttempt>()
+  private exams = new Map<string, MockExam>()
+  private examsById = new Map<string, MockExam>()
   private session = false
+
+  // يجب تهيئة امتحان افتراضي واحد للاختبارات
+  constructor() {
+    this.seedDefaultExam()
+  }
+
+  private seedDefaultExam() {
+    const exam: MockExam = {
+      id: 'exam-default',
+      title: 'اختبار تدريبي شامل',
+      description: 'اختبار يغطي المحاسبة والذكاء و Excel',
+      instructions: 'أجب على الأسئلة في الوقت المحدد. يمكنك المراجعة بعد التسليم.',
+      slug: 'demo-exam',
+      is_active: true,
+      passing_score: 70,
+      time_limit_minutes: null,
+      allow_retakes: true,
+      sections: [
+        { category_id: 'cat-acc', question_count: 10 },
+        { category_id: 'cat-iq', question_count: 10 },
+        { category_id: 'cat-ex', question_count: 10 },
+      ],
+    }
+    this.exams.set(exam.slug, exam)
+    this.examsById.set(exam.id, exam)
+  }
 
   private get correctByQuestion(): Record<string, string> {
     const map: Record<string, string> = {}
@@ -113,9 +160,13 @@ export class MockRepository implements ExamRepository {
     return result
   }
 
-  // ---------- المتقدم (دخول الضيف) ----------
+  // ---------- Candidate entry ----------
 
-  async createCandidateAttempt(name: string, email?: string): Promise<{ attempt_id: string; candidate_name: string; candidate_email: string; status: string; started_at: string }> {
+  async createCandidateAttempt(
+    name: string,
+    email?: string,
+    examId?: string,
+  ): Promise<{ attempt_id: string; candidate_name: string; candidate_email: string; status: string; started_at: string }> {
     const candidateName = name.trim()
     const candidateEmail = email?.trim() || ''
     if (!candidateName) {
@@ -126,7 +177,8 @@ export class MockRepository implements ExamRepository {
       (a) =>
         a.candidateName === candidateName &&
         a.candidateEmail === candidateEmail &&
-        a.status === 'in_progress',
+        a.status === 'in_progress' &&
+        (examId ? a.examId === examId : true),
     )
     if (existing) {
       return {
@@ -139,10 +191,22 @@ export class MockRepository implements ExamRepository {
     }
 
     const counts: Record<string, number> = {}
-    for (const cat of this.categories.filter((c) => c.is_active)) {
-      const setting = this.settings.find((s) => s.category_id === cat.id)
-      counts[cat.id] = setting?.question_count_default ?? 10
+    if (examId && this.examsById.has(examId)) {
+      const exam = this.examsById.get(examId)!
+      for (const sec of exam.sections) {
+        counts[sec.category_id] = sec.question_count
+      }
+    } else {
+      for (const cat of this.categories.filter((c) => c.is_active)) {
+        const setting = this.settings.find((s) => s.category_id === cat.id)
+        counts[cat.id] = setting?.question_count_default ?? 10
+      }
     }
+
+    if (Object.keys(counts).length === 0) {
+      throw new Error('لا توجد أقسام نشطة')
+    }
+
     const questions = createQuiz(this.questions, counts)
     const attemptId = crypto.randomUUID()
     const now = new Date().toISOString()
@@ -162,6 +226,7 @@ export class MockRepository implements ExamRepository {
       submittedAt: null,
       candidateName,
       candidateEmail,
+      examId: examId || null,
     })
     return {
       attempt_id: attemptId,
@@ -169,6 +234,54 @@ export class MockRepository implements ExamRepository {
       candidate_email: candidateEmail,
       status: 'in_progress',
       started_at: now,
+    }
+  }
+
+  async getExamBySlug(slug: string): Promise<{
+    id: string
+    title: string
+    description: string | null
+    instructions: string
+    is_active: boolean
+    passing_score: number
+    time_limit_minutes: number | null
+    allow_retakes: boolean
+  } | null> {
+    const exam = this.exams.get(slug)
+    if (!exam) return null
+    return {
+      id: exam.id,
+      title: exam.title,
+      description: exam.description,
+      instructions: exam.instructions,
+      is_active: exam.is_active,
+      passing_score: exam.passing_score,
+      time_limit_minutes: exam.time_limit_minutes,
+      allow_retakes: exam.allow_retakes,
+    }
+  }
+
+  async getExamById(id: string): Promise<{
+    id: string
+    title: string
+    description: string | null
+    instructions: string
+    is_active: boolean
+    passing_score: number
+    time_limit_minutes: number | null
+    allow_retakes: boolean
+  } | null> {
+    const exam = this.examsById.get(id)
+    if (!exam) return null
+    return {
+      id: exam.id,
+      title: exam.title,
+      description: exam.description,
+      instructions: exam.instructions,
+      is_active: exam.is_active,
+      passing_score: exam.passing_score,
+      time_limit_minutes: exam.time_limit_minutes,
+      allow_retakes: exam.allow_retakes,
     }
   }
 
@@ -194,7 +307,14 @@ export class MockRepository implements ExamRepository {
     return JSON.parse(JSON.stringify(this.categories))
   }
 
-  async saveCategory(cat: { id?: string; name: string; slug: string; description: string; accent_color: string; is_active: boolean }): Promise<Category> {
+  async saveCategory(cat: {
+    id?: string
+    name: string
+    slug: string
+    description: string
+    accent_color: string
+    is_active: boolean
+  }): Promise<Category> {
     if (cat.id) {
       const found = this.categories.find((c) => c.id === cat.id)!
       Object.assign(found, cat, { updated_at: new Date().toISOString() })
@@ -240,7 +360,13 @@ export class MockRepository implements ExamRepository {
       q.explanation = draft.explanation
       q.difficulty = draft.difficulty
       q.updated_at = new Date().toISOString()
-      q.options = draft.options.map((o, i) => ({ id: `${id}-o${i}`, question_id: id, option_text: o.option_text, is_correct: o.is_correct, sort_order: i }))
+      q.options = draft.options.map((o, i) => ({
+        id: `${id}-o${i}`,
+        question_id: id,
+        option_text: o.option_text,
+        is_correct: o.is_correct,
+        sort_order: i,
+      }))
       return JSON.parse(JSON.stringify(q))
     }
     const created: Question = {
@@ -253,7 +379,13 @@ export class MockRepository implements ExamRepository {
       created_by: null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      options: draft.options.map((o, i) => ({ id: `${crypto.randomUUID()}`, question_id: '', option_text: o.option_text, is_correct: o.is_correct, sort_order: i })),
+      options: draft.options.map((o, i) => ({
+        id: `${crypto.randomUUID()}`,
+        question_id: '',
+        option_text: o.option_text,
+        is_correct: o.is_correct,
+        sort_order: i,
+      })),
     }
     created.options!.forEach((o) => (o.question_id = created.id))
     this.questions.push(created)

@@ -58,6 +58,18 @@ interface SubmitResponse {
   review: ReviewItem[]
 }
 
+interface ExamRow {
+  id: string
+  title: string
+  description: string | null
+  instructions: string
+  slug: string
+  is_active: boolean
+  passing_score: number
+  time_limit_minutes: number | null
+  allow_retakes: boolean
+}
+
 export class SupabaseRepository implements ExamRepository {
   private readonly sb: SupabaseClient<Database>
 
@@ -173,6 +185,55 @@ export class SupabaseRepository implements ExamRepository {
     }
   }
 
+  // ---------- Candidate entry ----------
+
+  async createCandidateAttempt(
+    name: string,
+    email?: string,
+    examId?: string,
+  ): Promise<{ attempt_id: string; candidate_name: string; candidate_email: string; status: string; started_at: string }> {
+    const { data, error } = await this.sb.rpc('create_candidate_attempt', {
+      p_name: name.trim(),
+      p_email: email?.trim() || null,
+      p_exam_id: examId ?? null,
+    })
+    if (error) throw error
+    const row = (data ?? {}) as {
+      attempt_id?: string
+      candidate_name?: string
+      candidate_email?: string
+      status?: string
+      started_at?: string
+    }
+    return {
+      attempt_id: row.attempt_id ?? '',
+      candidate_name: row.candidate_name ?? name.trim(),
+      candidate_email: row.candidate_email ?? '',
+      status: row.status ?? 'in_progress',
+      started_at: row.started_at ?? new Date().toISOString(),
+    }
+  }
+
+  async getExamBySlug(slug: string): Promise<ExamRow | null> {
+    const { data, error } = await this.sb
+      .from('exams')
+      .select('id, title, description, instructions, slug, is_active, passing_score, time_limit_minutes, allow_retakes')
+      .eq('slug', slug)
+      .maybeSingle()
+    if (error) throw error
+    return (data ?? null) as ExamRow | null
+  }
+
+  async getExamById(id: string): Promise<ExamRow | null> {
+    const { data, error } = await this.sb
+      .from('exams')
+      .select('id, title, description, instructions, slug, is_active, passing_score, time_limit_minutes, allow_retakes')
+      .eq('id', id)
+      .maybeSingle()
+    if (error) throw error
+    return (data ?? null) as ExamRow | null
+  }
+
   // ---------- إدارة ----------
 
   async isAdmin(): Promise<boolean> {
@@ -197,7 +258,14 @@ export class SupabaseRepository implements ExamRepository {
     return (data ?? []) as Category[]
   }
 
-  async saveCategory(cat: { id?: string; name: string; slug: string; description: string; accent_color: string; is_active: boolean }): Promise<Category> {
+  async saveCategory(cat: {
+    id?: string
+    name: string
+    slug: string
+    description: string
+    accent_color: string
+    is_active: boolean
+  }): Promise<Category> {
     if (cat.id) {
       const { data, error } = await this.sb
         .from('categories')
@@ -259,22 +327,48 @@ export class SupabaseRepository implements ExamRepository {
       const { error: optErr } = await this.sb.from('question_options').insert(insertOpts)
       if (optErr) throw optErr
       const { data: full } = await this.sb.from('questions').select('*').eq('id', id).single()
-      return { ...(upd ?? (full as Question)), options: draft.options.map((o, i) => ({ id: `${id}-o${i}`, question_id: id, option_text: o.option_text, is_correct: o.is_correct, sort_order: i })) }
+      return {
+        ...(upd ?? (full as Question)),
+        options: draft.options.map((o, i) => ({
+          id: `${id}-o${i}`,
+          question_id: id,
+          option_text: o.option_text,
+          is_correct: o.is_correct,
+          sort_order: i,
+        }),
+      }
     }
     const user = (await this.sb.auth.getUser()).data.user
     const { data, error } = await this.sb
       .from('questions')
-      .insert({ category_id: draft.category_id, question_text: draft.question_text, explanation: draft.explanation, difficulty: draft.difficulty, created_by: user?.id ?? null })
+      .insert({
+        category_id: draft.category_id,
+        question_text: draft.question_text,
+        explanation: draft.explanation,
+        difficulty: draft.difficulty,
+        created_by: user?.id ?? null,
+      })
       .select('*')
       .single()
     if (error) throw error
     const qid = data.id
-    const insertOpts = draft.options.map((o, i) => ({ question_id: qid, option_text: o.option_text, is_correct: o.is_correct, sort_order: i }))
+    const insertOpts = draft.options.map((o, i) => ({
+      question_id: qid,
+      option_text: o.option_text,
+      is_correct: o.is_correct,
+      sort_order: i,
+    }))
     const { error: optErr } = await this.sb.from('question_options').insert(insertOpts)
     if (optErr) throw optErr
     return {
       ...(data as Question),
-      options: draft.options.map((o, i) => ({ id: `${qid}-o${i}`, question_id: qid, option_text: o.option_text, is_correct: o.is_correct, sort_order: i })),
+      options: draft.options.map((o, i) => ({
+        id: `${qid}-o${i}`,
+        question_id: qid,
+        option_text: o.option_text,
+        is_correct: o.is_correct,
+        sort_order: i,
+      })),
     }
   }
 
@@ -293,7 +387,13 @@ export class SupabaseRepository implements ExamRepository {
     for (const item of s) {
       const { error } = await this.sb
         .from('quiz_settings')
-        .upsert({ id: item.id, category_id: item.category_id, question_count_default: item.question_count_default, time_limit_minutes: item.time_limit_minutes, passing_score: item.passing_score })
+        .upsert({
+          id: item.id,
+          category_id: item.category_id,
+          question_count_default: item.question_count_default,
+          time_limit_minutes: item.time_limit_minutes,
+          passing_score: item.passing_score,
+        })
       if (error) throw error
     }
   }
@@ -323,26 +423,5 @@ export class SupabaseRepository implements ExamRepository {
       .limit(limit)
     if (error) throw error
     return (data ?? []) as AttemptRow[]
-  }
-  async createCandidateAttempt(name: string, email?: string): Promise<{ attempt_id: string; candidate_name: string; candidate_email: string; status: string; started_at: string }> {
-    const { data, error } = await this.sb.rpc('create_candidate_attempt', {
-      p_name: name.trim(),
-      p_email: email?.trim() || null,
-    })
-    if (error) throw error
-    const row = (data ?? {}) as {
-      attempt_id?: string
-      candidate_name?: string
-      candidate_email?: string
-      status?: string
-      started_at?: string
-    }
-    return {
-      attempt_id: row.attempt_id ?? '',
-      candidate_name: row.candidate_name ?? name.trim(),
-      candidate_email: row.candidate_email ?? '',
-      status: row.status ?? 'in_progress',
-      started_at: row.started_at ?? new Date().toISOString(),
-    }
   }
 }
