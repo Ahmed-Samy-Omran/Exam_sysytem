@@ -1,10 +1,15 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button, Card, Field, PageHeader } from '@/components/ui'
-import { getRepository } from '@/lib/repository/factory'
+import { getMode, getRepository } from '@/lib/repository/factory'
+
+const MOCK_DEMO = { user: 'omar', pass: 'omar369@' }
+const SUPABASE_DEMO = { user: 'omar@exam.com', pass: 'omar369@' }
 
 export function AdminLoginPage() {
   const nav = useNavigate()
+  const isMock = getMode() === 'mock'
+  const demo = isMock ? MOCK_DEMO : SUPABASE_DEMO
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -28,8 +33,14 @@ export function AdminLoginPage() {
       <Card className="w-full max-w-sm p-6">
         <PageHeader title="لوحة الإدارة" subtitle="سجّل دخول المدير" />
         <div className="space-y-4">
-          <Field label="الاسم">
-            <input className="input" type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="omar" />
+          <Field label={isMock ? 'الاسم' : 'البريد الإلكتروني'}>
+            <input
+              className="input"
+              type={isMock ? 'text' : 'email'}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder={isMock ? 'omar' : 'omar@exam.com'}
+            />
           </Field>
           <Field label="كلمة المرور">
             <input className="input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
@@ -39,7 +50,7 @@ export function AdminLoginPage() {
             {busy ? 'جارٍ الدخول…' : 'دخول'}
           </Button>
           <p className="text-center text-xs text-muted-foreground">
-            للتجربة: name: omar / pass: omar369@
+            للتجربة: {isMock ? `name: ${demo.user} / pass: ${demo.pass}` : `${demo.user} / ${demo.pass}`}
           </p>
         </div>
       </Card>

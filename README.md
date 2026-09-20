@@ -51,7 +51,15 @@ npm run build   # typecheck + بناء الإنتاج
    - `supabase/migrations/0007_retakes_and_passing.sql`
    - `supabase/seed.sql`
 3. نفّذ `supabase/seed.sql` للبيانات التجريبية (أقسام + أسئلة + إعدادات).
-4. أضف أول مدير بأمر SQL (يُطلب من المستخدم تسجيل الدخول من صفحة `/admin/login` ثم تنفيذ السطر الذي يحوّل `auth.uid()` إلى مدير — انظر نهاية `seed.sql`).
+4. أنشئ حساب المدير ثم اربطه بالجدول:
+   - Dashboard → Authentication → Users → Add user: البريد `omar@exam.com` | كلمة المرور `omar369@` (فعّل Auto Confirm)
+   - ثم نفّذ في SQL editor:
+
+     ```sql
+     insert into public.admin_users (user_id, email)
+     select id, email from auth.users where email = 'omar@exam.com'
+     on conflict do nothing;
+     ```
 5. الإعدادات الكاملة: `docs/setup-supabase.md`.
 
 ## النشر على GitHub Pages

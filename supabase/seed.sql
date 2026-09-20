@@ -22,21 +22,40 @@ declare
   cat_acc uuid;
   cat_iq  uuid;
   cat_ex  uuid;
+  fresh   boolean := false;
 begin
   insert into public.categories (name, slug, description, accent_color)
   values ('Accounting', 'accounting', 'أسئلة المبادئ المحاسبية والقوائم المالية', '#16A34A')
+  on conflict (slug) do nothing
   returning id into cat_acc;
+  if cat_acc is not null then fresh := true; end if;
+  select id into cat_acc from public.categories where slug = 'accounting';
 
   insert into public.categories (name, slug, description, accent_color)
   values ('IQ', 'iq', 'أسئلة الذكاء والتحليل المنطقي', '#7C3AED')
+  on conflict (slug) do nothing
   returning id into cat_iq;
+  if cat_iq is not null then fresh := true; end if;
+  select id into cat_iq from public.categories where slug = 'iq';
 
   insert into public.categories (name, slug, description, accent_color)
   values ('Excel', 'excel', 'دوال Excel والمعادلات وتنسيق الجداول', '#EA580C')
+  on conflict (slug) do nothing
   returning id into cat_ex;
+  if cat_ex is not null then fresh := true; end if;
+  select id into cat_ex from public.categories where slug = 'excel';
 
   insert into public.quiz_settings (category_id, question_count_default, time_limit_minutes, passing_score)
-  values (cat_acc, 10, null, 70), (cat_iq, 10, null, 70), (cat_ex, 10, null, 70);
+  select cat_acc, 10, null, 70
+  where not exists (select 1 from public.quiz_settings where category_id = cat_acc);
+  insert into public.quiz_settings (category_id, question_count_default, time_limit_minutes, passing_score)
+  select cat_iq, 10, null, 70
+  where not exists (select 1 from public.quiz_settings where category_id = cat_iq);
+  insert into public.quiz_settings (category_id, question_count_default, time_limit_minutes, passing_score)
+  select cat_ex, 10, null, 70
+  where not exists (select 1 from public.quiz_settings where category_id = cat_ex);
+
+  if fresh then
 
   -- Accounting
   perform public.seed_question(cat_acc, 'ما المبدأ المحاسبي الذي يقضي بتسجيل العمليات وقت حدوثها وليس وقت السداد؟', 'مبدأ الاستحقاق (Accrual) يسجل الإيراد عند تحققّه والمصروف عند استحقاقه.', array['مبدأ الاستحقاق', 'الأساس النقدي', 'مبدأ الحيطة والحذر', 'مبدأ التكلفة التاريخية'], 0);
@@ -73,15 +92,19 @@ begin
   perform public.seed_question(cat_ex, 'كيف تجمع فقط خلايا تحقق شرطًا محددًا؟', 'SUMIF تجمع الخلايا المطابقة لشرط.', array['=SUMIF', '=SUM', '=IF', '=COUNTIF'], 0);
   perform public.seed_question(cat_ex, 'ما نوع المرجع في $A$1؟', 'مرجع مطلق يقفل العمود والصف عند النسخ.', array['مطلق', 'نسبي', 'مختلط', 'مسمّى'], 0);
   perform public.seed_question(cat_ex, 'ما الدالة التي تحسب عدد الخلايا غير الفارغة؟', 'COUNTA تحسب الخلايا غير الفارغة.', array['=COUNT', '=COUNTA', '=IF', '=SUM'], 1);
+  else
+    raise notice 'الأقسام موجودة مسبقًا — تم تخطي إدراج الأسئلة التجريبية';
+  end if;
 end $$;
 
 drop function public.seed_question(uuid, text, text, text[], int);
 
--- ---------- إضافة أول مدير (يدوي) ----------
--- بعد تفعيل Auth وفتح حساب للمدير، نفّذ في SQL editor:
+-- ---------- إضافة المدير الأول (يدوي) ----------
+-- 1) أنشئ حساب المدير في:
+--    Supabase Dashboard → Authentication → Users → Add user
+--    البريد: omar@exam.com | كلمة المرور: omar369@  (فعّل "Auto Confirm")
+-- 2) ثم نفّذ في SQL editor لربط الحساب بجدول المديرين:
 --
 -- insert into public.admin_users (user_id, email)
--- values (auth.uid(), 'admin@yourdomain.com')
+-- select id, email from auth.users where email = 'omar@exam.com'
 -- on conflict do nothing;
---
--- وليكن الحساب مشار إليه عبر "User > Admin in Studio > authentication" أولًا.
