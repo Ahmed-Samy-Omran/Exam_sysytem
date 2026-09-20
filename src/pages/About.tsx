@@ -11,8 +11,8 @@ export function AboutPage() {
       <p className="mt-3 leading-relaxed text-muted-foreground">
         هذه المنصة مناسبة للتدريب والمذاكرة ولا تُعدّ نظام امتحانات رسمي عالي الأمانة.
       </p>
-      <Link to="/quiz/setup" className="btn btn-primary mt-6">
-        ابدأ اختبارًا
+      <Link to="/" className="btn btn-primary mt-6">
+        استعرض الامتحانات المتاحة
       </Link>
     </main>
   )

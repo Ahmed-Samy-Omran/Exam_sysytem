@@ -136,13 +136,49 @@ describe('ExamStartPage — تدفق دخول المتقدم', () => {
     await waitFor(() => expect(startButton()).not.toBeDisabled())
   })
 
-  it('إعادة فتح الصفحة مع محاولة قيد التنفيذ تعيد التوجيه دون محاولة جديدة', async () => {
-    const spy = vi.spyOn(useRepo(), 'createCandidateAttempt')
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ attempt_id: 'restored-1', status: 'in_progress' }))
+  it('إعادة فتح الصفحة مع محاولة قيد التنفيذ (موجودة فعلاً) تعيد التوجيه دون محاولة جديدة', async () => {
+    const repo = useRepo()
+    const init = await repo.createCandidateAttempt('أحمد')
+    const spy = vi.spyOn(repo, 'createCandidateAttempt')
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ attempt_id: init.attempt_id, status: 'in_progress' }))
 
     renderPage()
-    await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('/quiz/restored-1'))
+    await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent(`/quiz/${init.attempt_id}`))
     expect(spy).not.toHaveBeenCalled()
+  })
+
+  it('محاولة قيد التنفيذ في الجلسة لكنها أُرسلت في قاعدة البيانات لا تُستئنف ولا تُعاد', async () => {
+    const repo = useRepo()
+    const init = await repo.createCandidateAttempt('أحمد')
+    await repo.submitAttempt(init.attempt_id, {}, 70)
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ attempt_id: init.attempt_id, status: 'in_progress' }))
+
+    renderPage()
+    await screen.findByPlaceholderText('اكتب اسمك الكامل')
+    await waitFor(() => expect(sessionStorage.getItem(STORAGE_KEY)).toBeNull())
+    expect(screen.getByTestId('location')).toHaveTextContent('/exam/start?exam=demo-exam')
+    expect(screen.getByRole('alert')).toHaveTextContent(/أكملت هذا الامتحان مسبقًا/)
+  })
+
+  it('لا ينشئ محاولة جديدة لمن أنهى الامتحان سابقًا عندما تكون إعادة المحاولة معطلة', async () => {
+    const repo = useRepo()
+    const exam = await repo.getExamBySlug('demo-exam')
+    ;(repo as unknown as { examsById: Map<string, { allow_retakes: boolean }> }).examsById.get(exam!.id)!.allow_retakes = false
+    const init = await repo.createCandidateAttempt('أحمد', undefined, exam!.id)
+    await repo.submitAttempt(init.attempt_id, {}, 70)
+
+    renderPage()
+    await screen.findByPlaceholderText('اكتب اسمك الكامل')
+    const spy = vi.spyOn(repo, 'createCandidateAttempt')
+    fireEvent.change(nameInput(), { target: { value: 'أحمد' } })
+    fireEvent.click(startButton())
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(/لا يُسمح بإعادة المحاولة/)
+    expect(spy).toHaveBeenCalledTimes(1)
+    const result = await spy.mock.results[0].value
+    expect(result.status).toBe('submitted')
+    expect(result.attempt_id).toBe(init.attempt_id)
+    expect(screen.getByTestId('location')).toHaveTextContent('/exam/start?exam=demo-exam')
   })
 
   it('محاولة منتهية في الجلسة تُمسح وتُعرض صفحة البداية من جديد', async () => {

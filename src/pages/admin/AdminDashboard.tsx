@@ -52,19 +52,33 @@ export function AdminDashboardPage() {
         <EmptyState title="لا توجد اختبارات مكتملة بعد" hint="بعد أداء المتقدمين للاختبارات تظهر النتائج هنا" />
       ) : (
         <Card className="overflow-x-auto">
-          <table className="w-full min-w-[560px] text-sm">
+          <table className="w-full min-w-[820px] text-sm">
             <thead>
               <tr className="border-b border-border text-start text-muted-foreground">
-                <th className="p-3 text-start font-bold">المحاولة</th>
+                <th className="p-3 text-start font-bold">المتقدم</th>
+                <th className="p-3 text-start font-bold">البريد</th>
+                <th className="p-3 text-start font-bold">الامتحان</th>
                 <th className="p-3 text-start font-bold">الدرجة</th>
-                <th className="p-3 text-start font-bold">التاريخ</th>
+                <th className="p-3 text-start font-bold">النتيجة</th>
+                <th className="p-3 text-start font-bold">تاريخ البدء</th>
               </tr>
             </thead>
             <tbody>
               {recent.map((a) => (
                 <tr key={a.id} className="border-b border-border last:border-0">
-                  <td className="p-3 font-bold" dir="ltr">{a.id.slice(0, 8)}</td>
+                  <td className="p-3 font-bold">{a.candidate_name || '—'}</td>
+                  <td className="p-3 text-muted-foreground" dir="ltr">{a.candidate_email || '—'}</td>
+                  <td className="p-3">{a.exam_title || 'امتحان سريع'}</td>
                   <td className="p-3">{a.score_percent == null ? '—' : formatPercent(Number(a.score_percent))}</td>
+                  <td className="p-3">
+                    {a.score_percent == null ? (
+                      <span className="badge badge-muted">—</span>
+                    ) : (
+                      <span className={passed(a) ? 'badge badge-success' : 'badge badge-destructive'}>
+                        {passed(a) ? 'ناجح' : 'راسب'}
+                      </span>
+                    )}
+                  </td>
                   <td className="p-3 text-muted-foreground">{formatDate(a.started_at)}</td>
                 </tr>
               ))}
@@ -74,4 +88,9 @@ export function AdminDashboardPage() {
       )}
     </div>
   )
+}
+
+function passed(a: AttemptRow): boolean {
+  if (a.score_percent == null) return false
+  return Number(a.score_percent) >= (a.passing_score ?? 70)
 }

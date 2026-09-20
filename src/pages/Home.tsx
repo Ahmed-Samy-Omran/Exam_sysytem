@@ -1,6 +1,7 @@
+import { useEffect, useState } from 'react'
 import { Calculator, Brain, Table2, ClipboardList, Play } from 'lucide-react'
-import { Card } from '@/components/ui'
-import { LinkButton } from '@/components/ui'
+import { Card, LinkButton, Spinner } from '@/components/ui'
+import { getRepository } from '@/lib/repository/factory'
 
 const features = [
   {
@@ -32,7 +33,27 @@ const features = [
   },
 ]
 
+const arrow = <span className="transition-transform group-hover:translate-x-1">←</span>
+
 export function HomePage() {
+  const [exams, setExams] = useState<{ id: string; title: string; slug: string; description: string | null }[] | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    getRepository()
+      .getActivePublicExams()
+      .then((list) => {
+        if (!cancelled) setExams(list)
+      })
+      .catch(() => {
+        if (!cancelled) setError('تعذر تحميل قائمة الامتحانات المتاحة.')
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   return (
     <main className="mx-auto max-w-4xl px-4 py-10 sm:py-16">
       <section className="text-center">
@@ -42,15 +63,46 @@ export function HomePage() {
           اختبار عشوائي من أسئلة المحاسبة والذكاء و Excel، مع نتيجة فورية ومراجعة مفصلة للأخطاء
           وشرح الإجابة الصحيحة.
         </p>
-        <div className="mt-8 flex items-center justify-center gap-3">
-          <LinkButton to="/exam/start?exam=demo-exam">
-            <Play className="h-5 w-5" />
-            ابدأ الاختبار
-          </LinkButton>
-          <LinkButton to="/about" variant="outline">
-            عن المنصة
-          </LinkButton>
-        </div>
+      </section>
+
+      <section className="mt-8">
+        {error ? (
+          <p role="alert" className="text-center text-sm font-bold text-destructive">{error}</p>
+        ) : exams === null ? (
+          <Spinner label="جاري تحميل الامتحانات…" />
+        ) : exams.length > 0 ? (
+          <div className="mx-auto grid max-w-2xl gap-4">
+            {exams.map((exam) => (
+              <LinkButton
+                key={exam.id}
+                to={`/exam/start?exam=${encodeURIComponent(exam.slug || exam.id)}`}
+                className="group flex w-full items-center justify-between gap-3 !py-4 !px-5"
+              >
+                <span className="flex items-center gap-3 text-right">
+                  <Play className="h-5 w-5 shrink-0" />
+                  <span className="flex flex-col items-start gap-1">
+                    <span className="font-extrabold">{exam.title}</span>
+                    {exam.description ? (
+                      <span className="text-sm font-normal text-white/80">{exam.description}</span>
+                    ) : null}
+                  </span>
+                </span>
+                {arrow}
+              </LinkButton>
+            ))}
+          </div>
+        ) : (
+          <Card className="mx-auto max-w-xl text-center p-8">
+            <p className="font-bold">لا توجد امتحانات متاحة حاليًا</p>
+            <p className="mt-1 text-sm text-muted-foreground">ستظهر الامتحانات المنشورة هنا بمجرد توفرها.</p>
+          </Card>
+        )}
+      </section>
+
+      <section className="mt-10">
+        <LinkButton to="/about" variant="outline" className="w-full sm:w-auto">
+          عن المنصة
+        </LinkButton>
       </section>
 
       <section className="mt-14 grid gap-4 sm:grid-cols-3">
@@ -70,8 +122,8 @@ export function HomePage() {
         <ClipboardList className="h-8 w-8 text-primary" />
         <p className="font-bold">كيف يعمل؟</p>
         <p className="max-w-lg text-sm text-muted-foreground">
-          اختر الأقسام وعدد الأسئلة، ثم أجب عن الأسئلة واحدة تلو الأخرى. بعد التسليم تحصل على
-          النتيجة والمراجعة الكاملة مع الإجابة الصحيحة والتصحيح لكل خطأ.
+          افتح رابط الامتحان، أدخل اسمك ثم ابدأ. بعد التسليم تحصل على النتيجة والمراجعة الكاملة مع
+          الإجابة الصحيحة والتصحيح لكل خطأ.
         </p>
       </section>
     </main>

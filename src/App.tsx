@@ -25,13 +25,13 @@ export default function App() {
       <Suspense fallback={null}>
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/quiz/setup" element={<QuizSetupPage />} />
           <Route path="/quiz/:attemptId" element={<QuizRunnerPage />} />
           <Route path="/quiz/:attemptId/result" element={<QuizResultPage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/admin/login" element={<AdminLoginPage />} />
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboardPage />} />
+            <Route path="setup" element={<QuizSetupPage />} />
             <Route path="questions" element={<AdminQuestionsPage />} />
             <Route path="questions/new" element={<AdminQuestionFormPage />} />
             <Route path="questions/:id/edit" element={<AdminQuestionFormPage />} />

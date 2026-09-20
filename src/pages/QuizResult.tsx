@@ -73,9 +73,9 @@ export function QuizResultPage() {
       )}
 
       <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-        <Link to="/quiz/setup" className="btn btn-primary">
+        <Link to="/" className="btn btn-primary">
           <RotateCcw className="h-4 w-4" />
-          إعادة اختبار جديد
+          استعرض الامتحانات
         </Link>
         <Link to="/" className="btn btn-ghost">
           الرئيسية

@@ -34,24 +34,44 @@ export function ExamStartPage() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [completedNotice, setCompletedNotice] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const busyRef = useRef(false)
   const nameRef = useRef<HTMLInputElement>(null)
 
-  // استعادة محاولة قيد التنفيذ من الجلسة (تحسين UX فقط)
+  // استعادة محاولة قيد التنفيذ من الجلسة بعد التحقق منها في قاعدة البيانات
   useEffect(() => {
+    let cancelled = false
     try {
       const raw = sessionStorage.getItem(STORAGE_KEY)
-      if (raw) {
-        const stored = JSON.parse(raw) as StoredAttempt
-        if (stored.status === 'in_progress' && stored.attempt_id) {
-          navigate(`/quiz/${stored.attempt_id}`, { replace: true })
-        } else {
-          sessionStorage.removeItem(STORAGE_KEY)
-        }
+      if (!raw) return
+      const stored = JSON.parse(raw) as StoredAttempt
+      if (stored.status !== 'in_progress' || !stored.attempt_id) {
+        sessionStorage.removeItem(STORAGE_KEY)
+        return
       }
+      ;(async () => {
+        try {
+          await getRepository().getAttempt(stored.attempt_id)
+          if (cancelled) return
+          navigate(`/quiz/${stored.attempt_id}`, { replace: true })
+        } catch {
+          // المحاولة لم تعد قابلة للاستئناف (أُرسلت أو انتهت أو حُذفت)
+          sessionStorage.removeItem(STORAGE_KEY)
+          if (cancelled) return
+          const resultKey = `quiz-result-${stored.attempt_id}`
+          if (sessionStorage.getItem(resultKey)) {
+            navigate(`/quiz/${stored.attempt_id}/result`, { replace: true })
+          } else {
+            setCompletedNotice('يبدو أنك أكملت هذا الامتحان مسبقًا ولم تعد قادرًا على المتابعة.')
+          }
+        }
+      })()
     } catch {
       sessionStorage.removeItem(STORAGE_KEY)
+    }
+    return () => {
+      cancelled = true
     }
   }, [navigate])
 
@@ -76,7 +96,9 @@ export function ExamStartPage() {
           }
         }
 
-        if (!loaded) {
+        if (!examSlugOrId) {
+          setExamError('رابط الامتحان غير مكتمل — تأكد من وجود معرف الامتحان في الرابط.')
+        } else if (!loaded) {
           setExamError('رابط الامتحان غير صحيح أو غير موجود. تأكد من الرابط أو تواصل مع مسؤول المنصة.')
         } else if (!loaded.is_active) {
           setExamError('هذا الامتحان غير نشط حاليًا. سيصدره المسؤول عند توفره.')
@@ -108,9 +130,18 @@ export function ExamStartPage() {
     busyRef.current = true
     setSubmitting(true)
     setError(null)
+    setCompletedNotice(null)
     try {
       const repo = getRepository()
       const result = await repo.createCandidateAttempt(trimmedName, email.trim() || undefined, exam.id)
+      if (result.status === 'submitted') {
+        // محاولة سابقة مكتملة ولا يُسمح بإعادة الاختبار لهذا المتقدم
+        sessionStorage.removeItem(STORAGE_KEY)
+        setCompletedNotice('لقد أكملت هذا الامتحان مسبقًا ولا يُسمح بإعادة المحاولة. يمكنك التواصل مع المسؤول إذا كانت هناك حاجة لإعادة الفتح.')
+        busyRef.current = false
+        setSubmitting(false)
+        return
+      }
       sessionStorage.setItem(
         STORAGE_KEY,
         JSON.stringify({ attempt_id: result.attempt_id, status: result.status }),
@@ -166,6 +197,15 @@ export function ExamStartPage() {
           <h3 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">تعليمات سريعة</h3>
           <p className="mt-2 text-sm leading-relaxed">{exam.instructions}</p>
         </Card>
+      ) : null}
+
+      {completedNotice ? (
+        <div
+          role="alert"
+          className="mt-4 rounded-lg border border-amber-300/40 bg-amber-500/10 p-4 text-sm font-bold text-amber-300"
+        >
+          {completedNotice}
+        </div>
       ) : null}
 
       <form onSubmit={handleSubmit} noValidate>

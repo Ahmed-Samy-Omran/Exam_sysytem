@@ -45,7 +45,10 @@ npm run build   # typecheck + بناء الإنتاج
    - `supabase/migrations/0001_initial.sql`
    - `supabase/migrations/0002_submit_attempt.sql`
    - `supabase/migrations/0003_rls_fixes.sql`
+   - `supabase/migrations/0004_candidate_flow.sql`
    - `supabase/migrations/0005_public_grants.sql`
+   - `supabase/migrations/0006_exams.sql`
+   - `supabase/migrations/0007_retakes_and_passing.sql`
    - `supabase/seed.sql`
 3. نفّذ `supabase/seed.sql` للبيانات التجريبية (أقسام + أسئلة + إعدادات).
 4. أضف أول مدير بأمر SQL (يُطلب من المستخدم تسجيل الدخول من صفحة `/admin/login` ثم تنفيذ السطر الذي يحوّل `auth.uid()` إلى مدير — انظر نهاية `seed.sql`).

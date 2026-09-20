@@ -14,7 +14,10 @@
 - `supabase/migrations/0001_initial.sql`
 - `supabase/migrations/0002_submit_attempt.sql`
 - `supabase/migrations/0003_rls_fixes.sql`
+- `supabase/migrations/0004_candidate_flow.sql` (تدفق دخول المتقدم)
 - `supabase/migrations/0005_public_grants.sql` (أذونات الجداول المطلوبة)
+- `supabase/migrations/0006_exams.sql` (جدول الامتحانات والنشر)
+- `supabase/migrations/0007_retakes_and_passing.sql` (سياسة إعادة المحاولة + درجة النجاح + المؤقت)
 - `supabase/seed.sql` (بيانات أولية)
 
 > **البديل الأسهل:** انسخ محتوى ملف **`supabase/apply_all.sql`** مرة واحدة والصقه في SQL Editor ثم Run —

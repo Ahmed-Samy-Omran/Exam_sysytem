@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { Home as HomeIcon, ListChecks, Settings as SettingsIcon, Tags, LayoutDashboard, LogOut, HelpCircle, ClipboardList } from 'lucide-react'
+import { Home as HomeIcon, ListChecks, Settings as SettingsIcon, Tags, LayoutDashboard, LogOut, HelpCircle, ClipboardList, Zap } from 'lucide-react'
 import { Spinner } from '@/components/ui'
 import { getRepository } from '@/lib/repository/factory'
 
 const navItems = [
 { to: '/admin', label: 'الرئيسية', icon: LayoutDashboard, end: true },
 { to: '/admin/exams', label: 'الامتحانات', icon: ClipboardList },
+{ to: '/admin/setup', label: 'اختبار سريع', icon: Zap },
 { to: '/admin/questions', label: 'بنك الأسئلة', icon: ListChecks },
 { to: '/admin/categories', label: 'الأقسام', icon: Tags },
 { to: '/admin/settings', label: 'الإعدادات', icon: SettingsIcon },

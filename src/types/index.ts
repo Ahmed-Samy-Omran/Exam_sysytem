@@ -26,6 +26,10 @@ export interface Quiz {
   questions: QuizQuestion[]
   time_limit_min: number | null
   created_at: string
+  /** درجة النجاح المحددة من إعدادات الامتحان (تقصير 70) */
+  passing_score?: number
+  /** عنوان الامتحان إن كانت المحاولة عبر امتحان منشور */
+  exam_title?: string | null
 }
 
 export type AnswerMap = Partial<Record<QuestionId, OptionId>>
@@ -110,6 +114,10 @@ export interface AttemptRow {
   unanswered_count: number
   started_at: string
   submitted_at: string | null
+  candidate_name?: string | null
+  candidate_email?: string | null
+  exam_title?: string | null
+  passing_score?: number | null
 }
 
 export interface QuestionDraftOption {

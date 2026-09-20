@@ -22,6 +22,8 @@ interface AttemptResponse {
   attempt_id: string
   total?: number
   time_limit_min: number | null
+  passing_score?: number | null
+  exam_title?: string | null
   questions: {
     question_id: string
     question_text: string
@@ -172,6 +174,8 @@ export class SupabaseRepository implements ExamRepository {
       attempt_id: resp.attempt_id,
       time_limit_min: resp.time_limit_min ?? null,
       created_at: new Date().toISOString(),
+      passing_score: typeof resp.passing_score === 'number' ? resp.passing_score : 70,
+      exam_title: resp.exam_title ?? null,
       questions: (resp.questions ?? []).map((item) => ({
         question_id: item.question_id,
         category_id: item.category_id,
@@ -232,6 +236,21 @@ export class SupabaseRepository implements ExamRepository {
       .maybeSingle()
     if (error) throw error
     return (data ?? null) as ExamRow | null
+  }
+
+  async getActivePublicExams(): Promise<{ id: string; title: string; slug: string; description: string | null }[]> {
+    const { data, error } = await this.sb
+      .from('exams')
+      .select('id, title, slug, description')
+      .eq('is_active', true)
+      .order('created_at', { ascending: true })
+    if (error) throw error
+    return (data ?? []).map((r) => ({
+      id: r.id,
+      title: r.title,
+      slug: r.slug,
+      description: r.description ?? null,
+    }))
   }
 
   // ---------- إدارة ----------
@@ -416,12 +435,30 @@ export class SupabaseRepository implements ExamRepository {
   }
 
   async getRecentAttempts(limit: number): Promise<AttemptRow[]> {
-    const { data, error } = await this.sb
+    const { data, error } = (await this.sb
       .from('quiz_attempts')
-      .select('id, status, score_percent, correct_count, wrong_count, unanswered_count, started_at, submitted_at')
+      .select(
+        'id, status, score_percent, correct_count, wrong_count, unanswered_count, started_at, submitted_at, candidate_name, candidate_email, exams ( title, passing_score )',
+      )
       .order('started_at', { ascending: false })
-      .limit(limit)
+      .limit(limit)) as any
     if (error) throw error
-    return (data ?? []) as AttemptRow[]
+    return ((data ?? []) as any[]).map((a) => {
+      const exam = a.exams as { title?: string; passing_score?: number } | null | undefined
+      return {
+        id: a.id,
+        status: a.status,
+        score_percent: a.score_percent,
+        correct_count: a.correct_count,
+        wrong_count: a.wrong_count,
+        unanswered_count: a.unanswered_count,
+        started_at: a.started_at,
+        submitted_at: a.submitted_at,
+        candidate_name: a.candidate_name ?? null,
+        candidate_email: a.candidate_email ?? null,
+        exam_title: exam?.title ?? null,
+        passing_score: exam?.passing_score ?? null,
+      }
+    })
   }
 }

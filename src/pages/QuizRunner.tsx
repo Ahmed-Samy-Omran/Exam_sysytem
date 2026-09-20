@@ -14,6 +14,9 @@ function storageKey(attemptId: string) {
 function resultKey(attemptId: string) {
   return `quiz-result-${attemptId}`
 }
+function activeAttemptStorageKey() {
+  return 'active_exam_attempt'
+}
 
 interface SavedState {
   answers: AnswerMap
@@ -99,12 +102,15 @@ export function QuizRunnerPage() {
 
   async function submit() {
     if (submitting) return
+    if (!quiz) return
     setSubmitting(true)
     setConfirmOpen(false)
     try {
-      const result = await getRepository().submitAttempt(attemptId, answersRef.current, PASSING)
+      const passing = quiz.passing_score ?? PASSING
+      const result = await getRepository().submitAttempt(attemptId, answersRef.current, passing)
       sessionStorage.setItem(resultKey(attemptId), JSON.stringify(result))
       sessionStorage.removeItem(storageKey(attemptId))
+      sessionStorage.removeItem(activeAttemptStorageKey())
       nav(`/quiz/${attemptId}/result`)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'فشل التسليم')

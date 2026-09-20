@@ -30,6 +30,7 @@ interface MockExam {
   time_limit_minutes: number | null
   allow_retakes: boolean
   sections: MockExamSection[]
+  created_at?: string
 }
 
 interface MockAttempt {
@@ -70,6 +71,7 @@ export class MockRepository implements ExamRepository {
       passing_score: 70,
       time_limit_minutes: null,
       allow_retakes: true,
+      created_at: '2026-01-01T00:00:00Z',
       sections: [
         { category_id: 'cat-acc', question_count: 6 },
         { category_id: 'cat-iq', question_count: 6 },
@@ -138,7 +140,8 @@ export class MockRepository implements ExamRepository {
 
   async getAttempt(attemptId: string): Promise<Quiz> {
     const att = this.attempts.get(attemptId)
-    if (!att) throw new Error('هذه المحاولة غير موجودة أو أُرسلت بالفعل')
+    if (!att) throw new Error('المحاولة غير موجودة')
+    if (att.status !== 'in_progress') throw new Error('هذه المحاولة أُرسلت بالفعل')
     return att.quiz
   }
 
@@ -173,29 +176,61 @@ export class MockRepository implements ExamRepository {
       throw new Error('الاسم مطلوب')
     }
 
-    const existing = [...this.attempts.values()].find(
-      (a) =>
-        a.candidateName === candidateName &&
-        a.candidateEmail === candidateEmail &&
-        a.status === 'in_progress' &&
-        (examId ? a.examId === examId : true),
-    )
-    if (existing) {
-      return {
-        attempt_id: existing.attemptId,
-        candidate_name: existing.candidateName ?? candidateName,
-        candidate_email: existing.candidateEmail ?? '',
-        status: existing.status,
-        started_at: existing.quiz.created_at,
+    const exam = examId ? this.examsById.get(examId) : undefined
+
+    if (exam) {
+      if (!exam.is_active) throw new Error('هذا الامتحان غير نشط أو غير متاح حاليًا')
+      // أحدث محاولة لنفس المتقدم في هذا الامتحان
+      const latest = [...this.attempts.values()]
+        .filter((a) => a.examId === examId && a.candidateName === candidateName && a.candidateEmail === candidateEmail)
+        .sort((a, b) => b.quiz.created_at.localeCompare(a.quiz.created_at))[0]
+      if (latest?.status === 'in_progress') {
+        return {
+          attempt_id: latest.attemptId,
+          candidate_name: latest.candidateName ?? candidateName,
+          candidate_email: latest.candidateEmail ?? '',
+          status: latest.status,
+          started_at: latest.quiz.created_at,
+        }
+      }
+      // منتهية ولا يُسمح بإعادة → عدم إنشاء محاولة جديدة
+      if (latest?.status === 'submitted' && !exam.allow_retakes) {
+        return {
+          attempt_id: latest.attemptId,
+          candidate_name: latest.candidateName ?? candidateName,
+          candidate_email: latest.candidateEmail ?? '',
+          status: latest.status,
+          started_at: latest.quiz.created_at,
+        }
+      }
+    } else {
+      // السلوك القديم بدون امتحان: استرجاع محاولة قيد التنفيذ إن وجدت
+      const existing = [...this.attempts.values()].find(
+        (a) =>
+          a.candidateName === candidateName &&
+          a.candidateEmail === candidateEmail &&
+          a.status === 'in_progress',
+      )
+      if (existing) {
+        return {
+          attempt_id: existing.attemptId,
+          candidate_name: existing.candidateName ?? candidateName,
+          candidate_email: existing.candidateEmail ?? '',
+          status: existing.status,
+          started_at: existing.quiz.created_at,
+        }
       }
     }
 
     const counts: Record<string, number> = {}
-    if (examId && this.examsById.has(examId)) {
-      const exam = this.examsById.get(examId)!
-      for (const sec of exam.sections) {
-        counts[sec.category_id] = sec.question_count
-      }
+    let timeLimit: number | null = null
+    let passingScore: number | undefined
+    let examTitle: string | null = null
+    if (exam) {
+      for (const sec of exam.sections) counts[sec.category_id] = sec.question_count
+      timeLimit = exam.time_limit_minutes
+      passingScore = exam.passing_score
+      examTitle = exam.title
     } else {
       for (const cat of this.categories.filter((c) => c.is_active)) {
         const setting = this.settings.find((s) => s.category_id === cat.id)
@@ -213,8 +248,10 @@ export class MockRepository implements ExamRepository {
     const quiz: Quiz = {
       attempt_id: attemptId,
       questions,
-      time_limit_min: null,
+      time_limit_min: timeLimit,
       created_at: now,
+      passing_score: passingScore ?? 70,
+      exam_title: examTitle,
     }
     this.attempts.set(attemptId, {
       attemptId,
@@ -283,6 +320,13 @@ export class MockRepository implements ExamRepository {
       time_limit_minutes: exam.time_limit_minutes,
       allow_retakes: exam.allow_retakes,
     }
+  }
+
+  async getActivePublicExams(): Promise<{ id: string; title: string; slug: string; description: string | null }[]> {
+    return [...this.exams.values()]
+      .filter((e) => e.is_active)
+      .sort((a, b) => (a.created_at ?? a.slug).localeCompare(b.created_at ?? b.slug) || a.title.localeCompare(b.title))
+      .map((e) => ({ id: e.id, title: e.title, slug: e.slug, description: e.description ?? null }))
   }
 
   // ---------- إدارة ----------
@@ -422,15 +466,22 @@ export class MockRepository implements ExamRepository {
       .filter((a) => a.status === 'submitted')
       .slice(-limit)
       .reverse()
-      .map((a) => ({
-        id: a.attemptId,
-        status: 'submitted' as const,
-        score_percent: a.score,
-        correct_count: 0,
-        wrong_count: 0,
-        unanswered_count: 0,
-        started_at: a.quiz.created_at,
-        submitted_at: a.submittedAt,
-      }))
+      .map((a) => {
+        const exam = a.examId ? this.examsById.get(a.examId) : undefined
+        return {
+          id: a.attemptId,
+          status: a.status as AttemptRow['status'],
+          score_percent: a.score,
+          correct_count: 0,
+          wrong_count: 0,
+          unanswered_count: 0,
+          started_at: a.quiz.created_at,
+          submitted_at: a.submittedAt,
+          candidate_name: a.candidateName ?? null,
+          candidate_email: a.candidateEmail ?? null,
+          exam_title: exam?.title ?? null,
+          passing_score: exam?.passing_score ?? null,
+        }
+      })
   }
 }
