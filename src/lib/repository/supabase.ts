@@ -335,7 +335,7 @@ export class SupabaseRepository implements ExamRepository {
           option_text: o.option_text,
           is_correct: o.is_correct,
           sort_order: i,
-        }),
+        })),
       }
     }
     const user = (await this.sb.auth.getUser()).data.user

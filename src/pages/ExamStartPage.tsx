@@ -24,7 +24,8 @@ interface ExamMeta {
 export function ExamStartPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const examSlugOrId = searchParams.get('exam') ?? useParams().exam?.replace(/^exam-/, '') ?? null
+  const params = useParams()
+  const examSlugOrId = searchParams.get('exam') ?? params.exam?.replace(/^exam-/, '') ?? null
 
   const [exam, setExam] = useState<ExamMeta | null>(null)
   const [examLoading, setExamLoading] = useState(true)
@@ -245,7 +246,7 @@ export function ExamStartPage() {
               value={window.location.href}
               onClick={(e) => (e.target as HTMLInputElement).select()}
             />
-            <Button variant="outline" size="sm" onClick={copyLink} disabled={copied}>
+            <Button variant="outline" onClick={copyLink} disabled={copied}>
               {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
               {copied ? 'تم النسخ' : 'نسخ'}
             </Button>

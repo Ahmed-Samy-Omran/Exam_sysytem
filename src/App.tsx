@@ -11,6 +11,7 @@ import { AdminQuestionsPage } from '@/pages/admin/AdminQuestions'
 import { AdminQuestionFormPage } from '@/pages/admin/AdminQuestionForm'
 import { AdminCategoriesPage } from '@/pages/admin/AdminCategories'
 import { AdminSettingsPage } from '@/pages/admin/AdminSettings'
+import { AdminExamsPage } from '@/pages/admin/AdminExams'
 import { NotFoundPage } from '@/pages/NotFound'
 import { ModeBanner } from '@/components/ModeBanner'
 import { ExamStartPage } from '@/pages/ExamStartPage'
@@ -36,6 +37,7 @@ export default function App() {
             <Route path="questions/:id/edit" element={<AdminQuestionFormPage />} />
             <Route path="categories" element={<AdminCategoriesPage />} />
             <Route path="settings" element={<AdminSettingsPage />} />
+            <Route path="exams" element={<AdminExamsPage />} />
           </Route>
           <Route path="/exam/start" element={<ExamStartPage />} />
           <Route path="*" element={<NotFoundPage />} />

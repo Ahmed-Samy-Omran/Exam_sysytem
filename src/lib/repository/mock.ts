@@ -71,9 +71,9 @@ export class MockRepository implements ExamRepository {
       time_limit_minutes: null,
       allow_retakes: true,
       sections: [
-        { category_id: 'cat-acc', question_count: 10 },
-        { category_id: 'cat-iq', question_count: 10 },
-        { category_id: 'cat-ex', question_count: 10 },
+        { category_id: 'cat-acc', question_count: 6 },
+        { category_id: 'cat-iq', question_count: 6 },
+        { category_id: 'cat-ex', question_count: 6 },
       ],
     }
     this.exams.set(exam.slug, exam)
@@ -226,7 +226,7 @@ export class MockRepository implements ExamRepository {
       submittedAt: null,
       candidateName,
       candidateEmail,
-      examId: examId || null,
+      examId: examId || undefined,
     })
     return {
       attempt_id: attemptId,

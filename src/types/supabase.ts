@@ -148,6 +148,50 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['attempt_answers']['Insert']>
         Relationships: []
       }
+      exams: {
+        Row: {
+          id: string
+          title: string
+          description: string | null
+          instructions: string
+          slug: string
+          is_active: boolean
+          passing_score: number
+          time_limit_minutes: number | null
+          allow_retakes: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          description?: string | null
+          instructions?: string
+          slug: string
+          is_active?: boolean
+          passing_score?: number
+          time_limit_minutes?: number | null
+          allow_retakes?: boolean
+        }
+        Update: Partial<Database['public']['Tables']['exams']['Insert']>
+        Relationships: []
+      }
+      exam_sections: {
+        Row: {
+          id: string
+          exam_id: string
+          category_id: string
+          question_count: number
+        }
+        Insert: {
+          id?: string
+          exam_id: string
+          category_id: string
+          question_count?: number
+        }
+        Update: Partial<Database['public']['Tables']['exam_sections']['Insert']>
+        Relationships: []
+      }
     }
     Views: {
       public_categories: {

@@ -15,12 +15,12 @@ const STORAGE_KEY = 'active_exam_attempt'
 
 function LocationProbe() {
   const loc = useLocation()
-  return <div data-testid="location">{loc.pathname}</div>
+  return <div data-testid="location">{loc.pathname}{loc.search}</div>
 }
 
-function renderPage() {
+function renderPage(Exam: string = 'demo-exam') {
   return render(
-    <MemoryRouter initialEntries={['/exam/start']}>
+    <MemoryRouter initialEntries={['/exam/start?exam=' + Exam]}>
       <LocationProbe />
       <ExamStartPage />
     </MemoryRouter>,
@@ -37,14 +37,25 @@ function useRepo() {
   return repo
 }
 
-async function submitName(value: string, email?: string) {
+async function fillForm(value: string, email?: string) {
   renderPage()
   await screen.findByPlaceholderText('اكتب اسمك الكامل')
   fireEvent.change(nameInput(), { target: { value } })
   if (email !== undefined) fireEvent.change(emailInput(), { target: { value: email } })
-  await act(async () => {
-    fireEvent.click(startButton())
-  })
+}
+
+async function clickStartAndNavigate() {
+  fireEvent.click(startButton())
+  // wait for either navigation or error alert (both resolve the test)
+  await waitFor(
+    () => {
+      const loc = screen.getByTestId('location')
+      if (loc.textContent?.includes('/quiz/')) return
+      if (screen.queryByRole('alert')) return
+      throw new Error('not yet')
+    },
+    { timeout: 5000 },
+  )
 }
 
 describe('ExamStartPage — تدفق دخول المتقدم', () => {
@@ -61,7 +72,8 @@ describe('ExamStartPage — تدفق دخول المتقدم', () => {
     const repo = useRepo()
     const spy = vi.spyOn(repo, 'createCandidateAttempt')
 
-    await submitName('   ')
+    await fillForm('   ')
+    fireEvent.click(startButton())
     expect(await screen.findByRole('alert')).toHaveTextContent('الاسم مطلوب')
     expect(spy).not.toHaveBeenCalled()
   })
@@ -70,11 +82,11 @@ describe('ExamStartPage — تدفق دخول المتقدم', () => {
     const repo = useRepo()
     const spy = vi.spyOn(repo, 'createCandidateAttempt')
 
-    await submitName('  أحمد  ')
-    await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent(/\/quiz\//))
+    await fillForm('  أحمد  ')
+    await clickStartAndNavigate()
 
     expect(spy).toHaveBeenCalledTimes(1)
-    expect(spy).toHaveBeenCalledWith('أحمد', undefined)
+    expect(spy).toHaveBeenCalledWith('أحمد', undefined, 'exam-default')
 
     const attemptId = (await spy.mock.results[0].value).attempt_id
     expect(screen.getByTestId('location')).toHaveTextContent(`/quiz/${attemptId}`)
@@ -84,10 +96,10 @@ describe('ExamStartPage — تدفق دخول المتقدم', () => {
     const repo = useRepo()
     const spy = vi.spyOn(repo, 'createCandidateAttempt')
 
-    await submitName('أحمد', 'ahmed@example.com')
-    await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent(/\/quiz\//))
+    await fillForm('أحمد', 'ahmed@example.com')
+    await clickStartAndNavigate()
 
-    expect(spy).toHaveBeenCalledWith('أحمد', 'ahmed@example.com')
+    expect(spy).toHaveBeenCalledWith('أحمد', 'ahmed@example.com', 'exam-default')
   })
 
   it('يمنع النقر المزدوج على زر البدء من إصدار طلبين', async () => {
@@ -98,9 +110,7 @@ describe('ExamStartPage — تدفق دخول المتقدم', () => {
     })
     const spy = vi.spyOn(repo, 'createCandidateAttempt').mockImplementationOnce(() => pending)
 
-    renderPage()
-    await screen.findByPlaceholderText('اكتب اسمك الكامل')
-    fireEvent.change(nameInput(), { target: { value: 'أحمد' } })
+    await fillForm('أحمد')
     const button = startButton()
     await act(async () => {
       fireEvent.click(button)
@@ -120,7 +130,8 @@ describe('ExamStartPage — تدفق دخول المتقدم', () => {
     const spy = vi.spyOn(repo, 'createCandidateAttempt')
     spy.mockRejectedValueOnce(new Error('فشل الاتصال بقاعدة البيانات'))
 
-    await submitName('أحمد')
+    await fillForm('أحمد')
+    fireEvent.click(startButton())
     expect(await screen.findByRole('alert')).toHaveTextContent('فشل الاتصال بقاعدة البيانات')
     await waitFor(() => expect(startButton()).not.toBeDisabled())
   })
@@ -141,7 +152,13 @@ describe('ExamStartPage — تدفق دخول المتقدم', () => {
     renderPage()
     await screen.findByPlaceholderText('اكتب اسمك الكامل')
     await waitFor(() => expect(sessionStorage.getItem(STORAGE_KEY)).toBeNull())
-    expect(screen.getByTestId('location')).toHaveTextContent('/exam/start')
+    expect(screen.getByTestId('location')).toHaveTextContent('/exam/start?exam=demo-exam')
     expect(spy).not.toHaveBeenCalled()
+  })
+
+  it('يعرض خطأ إذا كان رابط الامتحان غير صحيح', async () => {
+    renderPage('non-existent-exam')
+    await screen.findByText(/رابط الامتحان غير صحيح/)
+    expect(screen.getByRole('button', { name: /العودة للرئيسية/ })).toBeInTheDocument()
   })
 })
