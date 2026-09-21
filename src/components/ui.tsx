@@ -161,10 +161,10 @@ export function EmptyState({ title, hint }: { title: string; hint?: string }) {
 
 export function PageHeader({ title, subtitle, actions }: { title: string; subtitle?: string; actions?: ReactNode }) {
   return (
-    <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+    <div className="mb-4 flex flex-wrap items-center justify-between gap-2 sm:mb-6 sm:gap-3">
       <div>
-        <h1 className="text-2xl font-extrabold">{title}</h1>
-        {subtitle ? <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p> : null}
+        <h1 className="text-xl font-extrabold sm:text-2xl">{title}</h1>
+        {subtitle ? <p className="mt-0.5 text-sm text-muted-foreground sm:mt-1">{subtitle}</p> : null}
       </div>
       {actions ? <div className="flex items-center gap-2">{actions}</div> : null}
     </div>

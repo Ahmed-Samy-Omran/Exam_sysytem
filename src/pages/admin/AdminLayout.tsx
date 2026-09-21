@@ -81,7 +81,7 @@ export function AdminLayout() {
       </aside>
 
       <div className="min-w-0 flex-1">
-        <header className="flex items-center justify-between gap-3 border-b border-border bg-card px-4 py-2 max-sm:flex sm:hidden">
+        <header className="flex items-center justify-between gap-3 border-b border-border bg-card px-3 py-2 max-sm:flex sm:hidden">
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -128,7 +128,7 @@ export function AdminLayout() {
             </div>
           </nav>
         ) : null}
-        <main className="p-4 sm:p-8">
+        <main className="p-3 sm:p-8">
           <Outlet />
         </main>
       </div>

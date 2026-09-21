@@ -44,20 +44,20 @@ export function AdminDashboardPage() {
         {cards.map((c) => (
           <Card
             key={c.label}
-            className="flex w-full max-w-full items-center gap-3 p-3 sm:p-5"
+            className="flex w-full max-w-full items-center gap-2.5 p-2.5 sm:gap-3 sm:p-5"
           >
-            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary sm:h-11 sm:w-11">
+            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary sm:h-11 sm:w-11">
               <c.icon className="h-5 w-5" />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="text-xl font-extrabold leading-tight sm:text-2xl">{c.value}</p>
-              <p className="text-sm font-bold leading-snug text-muted-foreground sm:truncate">{c.label}</p>
+              <p className="text-lg font-extrabold leading-tight sm:text-2xl">{c.value}</p>
+              <p className="text-xs font-bold leading-snug text-muted-foreground sm:text-sm sm:truncate">{c.label}</p>
             </div>
           </Card>
         ))}
       </div>
 
-      <div className="mb-3 mt-6 flex items-center gap-2 sm:mt-8">
+      <div className="mb-2 mt-5 flex items-center gap-2 sm:mb-3 sm:mt-8">
         <ClipboardList className="h-5 w-5 text-primary" />
         <h2 className="text-lg font-extrabold">الامتحانات ونشاط المتقدمين</h2>
       </div>
@@ -66,7 +66,7 @@ export function AdminDashboardPage() {
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {exams.map((exam) => (
-            <Card key={exam.id} className="p-4 sm:p-5">
+            <Card key={exam.id} className="p-3.5 sm:p-5">
               <div className="flex items-start justify-between gap-2">
                 <p className="font-extrabold leading-relaxed">{exam.title}</p>
                 <span className={`badge shrink-0 ${exam.is_active ? 'badge-success' : 'badge-muted'}`}>
@@ -74,17 +74,17 @@ export function AdminDashboardPage() {
                 </span>
               </div>
               {exam.attempts === 0 ? (
-                <p className="mt-3 rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm font-bold text-muted-foreground">
+                <p className="mt-2.5 rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm font-bold text-muted-foreground">
                   لم يبدأ أحد هذا الامتحان بعد
                 </p>
               ) : (
-                <div className="mt-3 flex items-center gap-4 text-sm">
+                <div className="mt-2.5 flex items-center gap-3 text-sm sm:gap-4">
                   <p>
-                    <span className="text-2xl font-extrabold">{exam.attempts}</span>{' '}
+                    <span className="text-xl font-extrabold sm:text-2xl">{exam.attempts}</span>{' '}
                     <span className="font-bold text-muted-foreground">محاولة مكتملة</span>
                   </p>
                   <p>
-                    <span className="text-2xl font-extrabold text-[#15803d]">{exam.passed}</span>{' '}
+                    <span className="text-xl font-extrabold text-[#15803d] sm:text-2xl">{exam.passed}</span>{' '}
                     <span className="font-bold text-muted-foreground">ناجح</span>
                   </p>
                 </div>
@@ -94,7 +94,7 @@ export function AdminDashboardPage() {
         </div>
       )}
 
-      <h2 className="mb-3 mt-6 text-lg font-extrabold sm:mt-8">آخر الاختبارات المكتملة</h2>
+      <h2 className="mb-2 mt-5 text-lg font-extrabold sm:mb-3 sm:mt-8">آخر الاختبارات المكتملة</h2>
       {recent.length === 0 ? (
         <EmptyState title="لا توجد محاولات حتى الآن" hint="عندما يبدأ المتقدمون الاختبارات وتُسلم نتائجهم تظهر هنا" />
       ) : (
