@@ -120,6 +120,24 @@ export interface AttemptRow {
   passing_score?: number | null
 }
 
+/** تفاصيل كاملة لمحاولة متقدم من لوحة الإدارة (مراجعة سؤال-بسؤال) */
+export interface AdminAttemptDetails {
+  id: AttemptId
+  status: AttemptRow['status']
+  score_percent: number | null
+  correct_count: number
+  wrong_count: number
+  unanswered_count: number
+  started_at: string
+  submitted_at: string | null
+  candidate_name?: string | null
+  candidate_email?: string | null
+  exam_title?: string | null
+  passing_score?: number | null
+  time_limit_min: number | null
+  review: QuestionReview[]
+}
+
 export interface QuestionDraftOption {
   option_text: string
   is_correct: boolean

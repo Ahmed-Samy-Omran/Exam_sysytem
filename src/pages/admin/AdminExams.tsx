@@ -419,8 +419,8 @@ export function AdminExamsPage() {
             </div>
             <div className="space-y-2">
               {formSections.map((s, i) => (
-                <div key={i} className="flex items-center gap-2 rounded-xl border border-border bg-card p-3">
-                  <select className="input flex-1" value={s.category_id} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => updateSection(i, 'category_id', e.target.value)}>
+                <div key={i} className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-card p-3">
+                  <select className="input min-w-40 flex-1" value={s.category_id} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => updateSection(i, 'category_id', e.target.value)}>
                     {categories.map((c: Category) => (
                       <option key={c.id} value={c.id}>{c.name}</option>
                     ))}

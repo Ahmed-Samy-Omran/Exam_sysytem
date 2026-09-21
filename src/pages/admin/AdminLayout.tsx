@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { Home as HomeIcon, ListChecks, Settings as SettingsIcon, Tags, LayoutDashboard, LogOut, HelpCircle, ClipboardList, Zap } from 'lucide-react'
+import { Home as HomeIcon, ListChecks, Settings as SettingsIcon, Tags, LayoutDashboard, LogOut, HelpCircle, ClipboardList, Zap, Menu } from 'lucide-react'
 import { Spinner } from '@/components/ui'
 import { getRepository } from '@/lib/repository/factory'
 
@@ -16,6 +16,7 @@ const navItems = [
 export function AdminLayout() {
   const nav = useNavigate()
   const [admin, setAdmin] = useState<boolean | null>(null)
+  const [menuOpen, setMenuOpen] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -80,10 +81,53 @@ export function AdminLayout() {
       </aside>
 
       <div className="flex-1">
-        <header className="flex items-center justify-end gap-3 border-b border-border bg-card px-4 py-2 max-sm:flex sm:hidden">
-          <span className="font-extrabold text-primary">لوحة الإدارة</span>
+        <header className="flex items-center justify-between gap-3 border-b border-border bg-card px-4 py-2 max-sm:flex sm:hidden">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setMenuOpen((o) => !o)}
+              aria-label="القائمة"
+              aria-expanded={menuOpen}
+              className="cursor-pointer rounded-lg border border-border p-2 hover:bg-muted"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+            <span className="font-extrabold text-primary">لوحة الإدارة</span>
+          </div>
           <button type="button" onClick={logout} className="btn btn-ghost text-sm">خروج</button>
         </header>
+        {menuOpen ? (
+          <nav className="border-b border-border bg-card px-3 py-2 sm:hidden">
+            <div className="space-y-1">
+              {navItems.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.end}
+                  onClick={() => setMenuOpen(false)}
+                  className={({ isActive }) =>
+                    `flex items-center gap-2 rounded-lg px-3 py-2 font-bold transition-colors ${
+                      isActive ? 'bg-primary text-on-primary' : 'hover:bg-muted'
+                    }`
+                  }
+                >
+                  <item.icon className="h-5 w-5" />
+                  {item.label}
+                </NavLink>
+              ))}
+              <div className="border-t border-border pt-1">
+                <NavLink to="/" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2 font-bold hover:bg-muted">
+                  <HomeIcon className="h-5 w-5" />
+                  عرض الموقع
+                </NavLink>
+                <NavLink to="/about" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2 font-bold hover:bg-muted">
+                  <HelpCircle className="h-5 w-5" />
+                  عن المنصة
+                </NavLink>
+              </div>
+            </div>
+          </nav>
+        ) : null}
         <main className="p-4 sm:p-8">
           <Outlet />
         </main>

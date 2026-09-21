@@ -1,4 +1,5 @@
 import type {
+  AdminAttemptDetails,
   AnswerMap,
   AttemptRow,
   Category,
@@ -27,6 +28,16 @@ export interface QuestionFilter {
   search?: string
 }
 
+/** ملخص النشاط لكل امتحان منشور للوحة الإدارة */
+export interface ExamAttemptSummary {
+  id: string
+  title: string
+  slug: string
+  is_active: boolean
+  attempts: number
+  passed: number
+}
+
 /** بوابة البيانات: تنفيذ Supabase، أو تنفيذ محلي للتطوير/الاختبار */
 export interface ExamRepository {
   // ---- عام (المتقدم) ----
@@ -49,6 +60,8 @@ export interface ExamRepository {
   saveSettings(s: QuizSettings[]): Promise<void>
   getStats(): Promise<Stats>
   getRecentAttempts(limit: number): Promise<AttemptRow[]>
+  getExamAttemptSummaries(): Promise<ExamAttemptSummary[]>
+  getAdminAttemptDetails(attemptId: string): Promise<AdminAttemptDetails>
 
   // ---- Candidate entry ----
   createCandidateAttempt(name: string, email?: string, examId?: string): Promise<{ attempt_id: string; candidate_name: string; candidate_email: string; status: string; started_at: string }>

@@ -120,7 +120,7 @@ export function QuizRunnerPage() {
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-6">
-      <div className="mb-4 flex items-center justify-between gap-3">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <Badge className={categoryBadgeClass(current.category_name ?? current.category_id)}>{current.category_name ?? 'سؤال'}</Badge>
           <span className="text-sm font-bold text-muted-foreground">

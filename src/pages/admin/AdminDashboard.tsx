@@ -1,23 +1,26 @@
 import { useEffect, useState } from 'react'
-import { ListChecks, Percent, Tags, Timer } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { ClipboardList, Eye, ListChecks, Percent, Tags, Timer } from 'lucide-react'
 import { Card, EmptyState, PageHeader, Spinner } from '@/components/ui'
 import { formatDate, formatPercent } from '@/lib/format'
 import { getRepository } from '@/lib/repository/factory'
+import type { ExamAttemptSummary, Stats } from '@/lib/repository'
 import type { AttemptRow } from '@/types'
-import type { Stats } from '@/lib/repository'
 
 export function AdminDashboardPage() {
   const [stats, setStats] = useState<Stats | null>(null)
   const [recent, setRecent] = useState<AttemptRow[]>([])
+  const [exams, setExams] = useState<ExamAttemptSummary[]>([])
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     ;(async () => {
       try {
         const repo = getRepository()
-        const [s, r] = await Promise.all([repo.getStats(), repo.getRecentAttempts(10)])
+        const [s, r, e] = await Promise.all([repo.getStats(), repo.getRecentAttempts(10), repo.getExamAttemptSummaries()])
         setStats(s)
         setRecent(r)
+        setExams(e)
       } catch (e) {
         setError(e instanceof Error ? e.message : 'تعذر تحميل الإحصائيات')
       }
@@ -30,8 +33,8 @@ export function AdminDashboardPage() {
   const cards = [
     { label: 'الأقسام', value: stats.categories, icon: Tags },
     { label: 'أسئلة نشطة', value: stats.activeQuestions, icon: ListChecks },
-    { label: 'محاولات مكتملة', value: stats.attempts, icon: Timer },
-    { label: 'متوسط الدرجات', value: stats.avgScore == null ? '—' : formatPercent(stats.avgScore), icon: Percent },
+    ...(stats.attempts > 0 ? [{ label: 'محاولات مكتملة', value: stats.attempts, icon: Timer }] : []),
+    ...(stats.avgScore != null ? [{ label: 'متوسط الدرجات', value: formatPercent(stats.avgScore), icon: Percent }] : []),
   ]
 
   return (
@@ -47,12 +50,49 @@ export function AdminDashboardPage() {
         ))}
       </div>
 
+      <div className="mb-3 mt-8 flex items-center gap-2">
+        <ClipboardList className="h-5 w-5 text-primary" />
+        <h2 className="text-lg font-extrabold">الامتحانات ونشاط المتقدمين</h2>
+      </div>
+      {exams.length === 0 ? (
+        <EmptyState title="لا توجد امتحانات منشورة بعد" hint="أنشئ امتحانًا من صفحة إدارة الامتحانات" />
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {exams.map((exam) => (
+            <Card key={exam.id} className="p-5">
+              <div className="flex items-start justify-between gap-2">
+                <p className="font-extrabold leading-relaxed">{exam.title}</p>
+                <span className={`badge shrink-0 ${exam.is_active ? 'badge-success' : 'badge-muted'}`}>
+                  {exam.is_active ? 'نشط' : 'غير نشط'}
+                </span>
+              </div>
+              {exam.attempts === 0 ? (
+                <p className="mt-3 rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm font-bold text-muted-foreground">
+                  لم يبدأ أحد هذا الامتحان بعد
+                </p>
+              ) : (
+                <div className="mt-3 flex items-center gap-4 text-sm">
+                  <p>
+                    <span className="text-2xl font-extrabold">{exam.attempts}</span>{' '}
+                    <span className="font-bold text-muted-foreground">محاولة مكتملة</span>
+                  </p>
+                  <p>
+                    <span className="text-2xl font-extrabold text-[#15803d]">{exam.passed}</span>{' '}
+                    <span className="font-bold text-muted-foreground">ناجح</span>
+                  </p>
+                </div>
+              )}
+            </Card>
+          ))}
+        </div>
+      )}
+
       <h2 className="mb-3 mt-8 text-lg font-extrabold">آخر الاختبارات المكتملة</h2>
       {recent.length === 0 ? (
-        <EmptyState title="لا توجد اختبارات مكتملة بعد" hint="بعد أداء المتقدمين للاختبارات تظهر النتائج هنا" />
+        <EmptyState title="لا توجد محاولات حتى الآن" hint="عندما يبدأ المتقدمون الاختبارات وتُسلم نتائجهم تظهر هنا" />
       ) : (
         <Card className="overflow-x-auto">
-          <table className="w-full min-w-[820px] text-sm">
+          <table className="w-full min-w-[900px] text-sm">
             <thead>
               <tr className="border-b border-border text-start text-muted-foreground">
                 <th className="p-3 text-start font-bold">المتقدم</th>
@@ -61,6 +101,7 @@ export function AdminDashboardPage() {
                 <th className="p-3 text-start font-bold">الدرجة</th>
                 <th className="p-3 text-start font-bold">النتيجة</th>
                 <th className="p-3 text-start font-bold">تاريخ البدء</th>
+                <th className="p-3 text-start font-bold">التفاصيل</th>
               </tr>
             </thead>
             <tbody>
@@ -80,6 +121,12 @@ export function AdminDashboardPage() {
                     )}
                   </td>
                   <td className="p-3 text-muted-foreground">{formatDate(a.started_at)}</td>
+                  <td className="p-3">
+                    <Link to={`/admin/attempts/${a.id}`} className="btn btn-outline px-3 py-1 text-sm">
+                      <Eye className="h-4 w-4" />
+                      عرض
+                    </Link>
+                  </td>
                 </tr>
               ))}
             </tbody>

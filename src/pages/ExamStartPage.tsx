@@ -277,7 +277,7 @@ export function ExamStartPage() {
 
       {/* رابط المشاركة — يمكن نسخه */}
       <Card className="mt-4 p-4 border-border bg-muted/20">
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <span className="text-xs font-bold text-muted-foreground">رابط المشاركة:</span>
           <div className="flex items-center gap-2">
             <input
@@ -286,7 +286,7 @@ export function ExamStartPage() {
               value={window.location.href}
               onClick={(e) => (e.target as HTMLInputElement).select()}
             />
-            <Button variant="outline" onClick={copyLink} disabled={copied}>
+            <Button variant="outline" onClick={copyLink} disabled={copied} className="shrink-0">
               {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
               {copied ? 'تم النسخ' : 'نسخ'}
             </Button>

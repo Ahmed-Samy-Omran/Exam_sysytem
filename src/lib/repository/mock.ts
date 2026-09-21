@@ -1,14 +1,16 @@
 import type {
+  AdminAttemptDetails,
   AnswerMap,
   AttemptRow,
   Category,
   Question,
   QuestionDraft,
+  QuestionReview,
   Quiz,
   QuizResult,
   QuizSettings,
 } from '@/types'
-import type { ExamRepository, QuestionFilter, QuizSetupItem, Stats } from '@/lib/repository'
+import type { ExamRepository, ExamAttemptSummary, QuestionFilter, QuizSetupItem, Stats } from '@/lib/repository'
 import { createQuiz, gradeQuiz } from '@/lib/quiz-engine'
 import { MOCK_CATEGORIES, MOCK_QUESTIONS, MOCK_SETTINGS } from '@/lib/mock/seedData'
 
@@ -38,6 +40,7 @@ interface MockAttempt {
   quiz: Quiz
   correctByQuestion: Record<string, string>
   explanations: Record<string, string>
+  answers: AnswerMap
   status: 'in_progress' | 'submitted'
   score: number | null
   submittedAt: string | null
@@ -131,6 +134,7 @@ export class MockRepository implements ExamRepository {
       quiz,
       correctByQuestion: this.correctByQuestion,
       explanations: this.explanations,
+      answers: {},
       status: 'in_progress',
       score: null,
       submittedAt: null,
@@ -149,6 +153,7 @@ export class MockRepository implements ExamRepository {
     const att = this.attempts.get(attemptId)
     if (!att) throw new Error('المحاولة غير موجودة')
     if (att.status === 'submitted') throw new Error('تم تسليم هذه المحاولة من قبل')
+    att.answers = answers
     const result = gradeQuiz({
       questions: att.quiz.questions,
       correctByQuestion: att.correctByQuestion,
@@ -266,6 +271,7 @@ export class MockRepository implements ExamRepository {
       quiz,
       correctByQuestion: this.correctByQuestion,
       explanations: this.explanations,
+      answers: {},
       status: 'in_progress',
       score: null,
       submittedAt: null,
@@ -491,5 +497,59 @@ export class MockRepository implements ExamRepository {
           passing_score: exam?.passing_score ?? null,
         }
       })
+  }
+
+  async getExamAttemptSummaries(): Promise<ExamAttemptSummary[]> {
+    return [...this.exams.values()]
+      .sort((a, b) => (a.created_at ?? a.slug).localeCompare(b.created_at ?? b.slug) || a.title.localeCompare(b.title))
+      .map((e) => {
+        const attempts = [...this.attempts.values()].filter((a) => a.examId === e.id && a.status === 'submitted')
+        const passed = attempts.filter((a) => a.score != null && a.score >= (e.passing_score ?? 70)).length
+        return { id: e.id, title: e.title, slug: e.slug, is_active: e.is_active, attempts: attempts.length, passed }
+      })
+  }
+
+  async getAdminAttemptDetails(attemptId: string): Promise<AdminAttemptDetails> {
+    const att = this.attempts.get(attemptId)
+    if (!att) throw new Error('المحاولة غير موجودة')
+    const exam = att.examId ? this.examsById.get(att.examId) : undefined
+    const passingScore = att.quiz.passing_score ?? exam?.passing_score ?? 70
+    const categoryNameById = new Map(this.categories.map((c) => [c.id, c.name]))
+
+    const review: QuestionReview[] = att.quiz.questions.map((q) => {
+      const chosen = att.answers[q.question_id] ?? null
+      const correct = att.correctByQuestion[q.question_id] ?? null
+      return {
+        question: {
+          ...q,
+          options: [...q.options],
+          category_name: q.category_name ?? categoryNameById.get(q.category_id) ?? q.category_id,
+        },
+        chosen_option_id: chosen,
+        correct_option_id: correct ?? '',
+        explanation: att.explanations[q.question_id] ?? '',
+        is_correct: chosen != null && correct != null && chosen === correct,
+        answered: chosen != null,
+      }
+    })
+    const correct = review.filter((r) => r.is_correct).length
+    const wrong = review.filter((r) => r.answered && !r.is_correct).length
+
+    return {
+      id: att.attemptId,
+      status: att.status,
+      score_percent: att.score,
+      correct_count: correct,
+      wrong_count: wrong,
+      unanswered_count: review.length - correct - wrong,
+      started_at: att.quiz.created_at,
+      submitted_at: att.submittedAt,
+      candidate_name: att.candidateName ?? null,
+      candidate_email: att.candidateEmail ?? null,
+      exam_title: exam?.title ?? att.quiz.exam_title ?? null,
+      passing_score: passingScore,
+      time_limit_min: att.quiz.time_limit_min,
+      review,
+    }
   }
 }

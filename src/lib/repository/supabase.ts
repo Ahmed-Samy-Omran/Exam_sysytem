@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type {
+  AdminAttemptDetails,
   AnswerMap,
   AttemptRow,
   Category,
@@ -13,6 +14,7 @@ import type {
 import type { Database } from '@/types/supabase'
 import type {
   ExamRepository,
+  ExamAttemptSummary,
   QuestionFilter,
   QuizSetupItem,
   Stats,
@@ -460,5 +462,99 @@ export class SupabaseRepository implements ExamRepository {
         passing_score: exam?.passing_score ?? null,
       }
     })
+  }
+
+  async getExamAttemptSummaries(): Promise<ExamAttemptSummary[]> {
+    const { data: exams, error: eErr } = (await this.sb
+      .from('exams')
+      .select('id, title, slug, is_active')
+      .order('created_at', { ascending: true })) as any
+    if (eErr) throw eErr
+    const { data: sub, error: sErr } = (await this.sb
+      .from('quiz_attempts')
+      .select('exam_id, score_percent, passing_score')
+      .eq('status', 'submitted')) as any
+    if (sErr) throw sErr
+    const map = new Map<string, { attempts: number; passed: number }>()
+    for (const row of sub ?? []) {
+      if (!row.exam_id) continue
+      const cur = map.get(row.exam_id) ?? { attempts: 0, passed: 0 }
+      cur.attempts += 1
+      const score = Number(row.score_percent)
+      if (Number.isFinite(score) && score >= (Number(row.passing_score) || 70)) cur.passed += 1
+      map.set(row.exam_id, cur)
+    }
+    return (exams ?? []).map((e: any) => {
+      const m = map.get(e.id) ?? { attempts: 0, passed: 0 }
+      return { id: e.id, title: e.title, slug: e.slug, is_active: e.is_active, attempts: m.attempts, passed: m.passed }
+    })
+  }
+
+  async getAdminAttemptDetails(attemptId: string): Promise<AdminAttemptDetails> {
+    const { data: att, error: attErr } = (await this.sb
+      .from('quiz_attempts')
+      .select(
+        'id, status, score_percent, correct_count, wrong_count, unanswered_count, started_at, submitted_at, candidate_name, candidate_email, time_limit_min, passing_score, exams ( title, passing_score )',
+      )
+      .eq('id', attemptId)
+      .maybeSingle()) as any
+    if (attErr) throw attErr
+    if (!att) throw new Error('المحاولة غير موجودة')
+    const exam = att.exams as { title?: string; passing_score?: number } | null | undefined
+
+    const { data: qs, error: qErr } = (await this.sb
+      .from('attempt_questions')
+      .select(
+        'id, question_id, question_text_snapshot, category_id, category_name, explanation_snapshot, correct_option_id, option_order, attempt_answers ( chosen_option_id, is_correct )',
+      )
+      .eq('attempt_id', attemptId)
+      .order('display_order', { ascending: true })) as any
+    if (qErr) throw qErr
+
+    const review = (qs ?? []).map((row: any) => {
+      const options: QuizOption[] = (Array.isArray(row.option_order) ? row.option_order : []).map((o: any) => ({
+        option_id: String(o.option_id),
+        option_text: String(o.option_text),
+      }))
+      const answerRow = Array.isArray(row.attempt_answers) ? row.attempt_answers[0] : undefined
+      const chosen: string | null = answerRow?.chosen_option_id ?? null
+      const isCorrect: boolean = answerRow?.is_correct ?? false
+      return {
+        question: {
+          question_id: row.question_id,
+          category_id: row.category_id,
+          question_text: row.question_text_snapshot,
+          difficulty: 'medium' as const,
+          options,
+          category_name: row.category_name,
+        },
+        chosen_option_id: chosen,
+        correct_option_id: row.correct_option_id,
+        explanation: row.explanation_snapshot ?? '',
+        is_correct: chosen != null && Boolean(isCorrect),
+        answered: chosen != null,
+      }
+    })
+
+    return {
+      id: att.id,
+      status: att.status,
+      score_percent: att.score_percent,
+      correct_count: att.correct_count,
+      wrong_count: att.wrong_count,
+      unanswered_count: att.unanswered_count,
+      started_at: att.started_at,
+      submitted_at: att.submitted_at,
+      candidate_name: att.candidate_name ?? null,
+      candidate_email: att.candidate_email ?? null,
+      exam_title: exam?.title ?? null,
+      passing_score: Number.isFinite(Number(att.passing_score))
+        ? Number(att.passing_score)
+        : Number.isFinite(Number(exam?.passing_score))
+          ? Number(exam?.passing_score)
+          : null,
+      time_limit_min: att.time_limit_min,
+      review,
+    }
   }
 }

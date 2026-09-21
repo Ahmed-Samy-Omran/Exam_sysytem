@@ -60,3 +60,39 @@ describe('MockRepository — تدفق دخول المتقدم', () => {
     expect(stats.attempts).toBe(1)
   })
 })
+
+describe('MockRepository — تفاصيل المحاولات للمدير', () => {
+  it('يحسب ملخص نشاط الامتحانات بعد محاولات مكتملة', async () => {
+    const repo = new MockRepository()
+    const result = await repo.createCandidateAttempt('أحمد', 'a@example.com', 'exam-default')
+    const quiz = await repo.getAttempt(result.attempt_id)
+    const answers = { [quiz.questions[0]!.question_id]: quiz.questions[0]!.options[0]!.option_id }
+    await repo.submitAttempt(result.attempt_id, answers, 70)
+
+    const summaries = await repo.getExamAttemptSummaries()
+    const exam = summaries.find((e) => e.id === 'exam-default')
+    expect(exam?.attempts).toBe(1)
+    expect(exam?.title).toBeTruthy()
+  })
+
+  it('يعيد تفاصيل محاولة كاملة بمراجعة سؤال-بسؤال', async () => {
+    const repo = new MockRepository()
+    const result = await repo.createCandidateAttempt('سارة', 's@example.com', 'exam-default')
+    const quiz = await repo.getAttempt(result.attempt_id)
+    const q = quiz.questions[0]!
+    const answers = { [q.question_id]: q.options[1]!.option_id }
+    await repo.submitAttempt(result.attempt_id, answers, 70)
+
+    const details = await repo.getAdminAttemptDetails(result.attempt_id)
+    expect(details.candidate_name).toBe('سارة')
+    expect(details.candidate_email).toBe('s@example.com')
+    expect(details.review.length).toBe(quiz.questions.length)
+    expect(details.review[0]!.question.category_name).toBeTruthy()
+    expect(details.score_percent).toBeGreaterThanOrEqual(0)
+  })
+
+  it('يرمي خطأ لتفاصيل محاولة غير موجودة', async () => {
+    const repo = new MockRepository()
+    await expect(repo.getAdminAttemptDetails('missing-id')).rejects.toThrow(/المحاولة غير موجودة/)
+  })
+})
