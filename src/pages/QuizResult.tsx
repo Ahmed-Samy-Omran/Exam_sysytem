@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { CheckCircle2, RotateCcw, XCircle } from 'lucide-react'
+import { CheckCircle2, Home, RotateCcw, XCircle } from 'lucide-react'
 import { Badge, Card, EmptyState, PageHeader, Spinner } from '@/components/ui'
 import { categoryBadgeClass, formatPercent } from '@/lib/format'
 import type { QuizResult } from '@/types'
@@ -29,6 +29,12 @@ export function QuizResultPage() {
 
   if (!result) return <Spinner />
   const passed = result.passed
+  const categoryNames = new Map<string, string>()
+  for (const item of result.review) {
+    if (item.question.category_name) {
+      categoryNames.set(item.question.category_id, item.question.category_name)
+    }
+  }
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8">
@@ -57,29 +63,41 @@ export function QuizResultPage() {
         <Card className="mt-4 p-5">
           <h3 className="mb-3 font-bold">النتيجة حسب القسم</h3>
           <div className="space-y-3">
-            {Object.entries(result.by_category).map(([catId, cat]) => (
-              <div key={catId} className="flex items-center justify-between">
-                <Badge className={categoryBadgeClass(catId)}>{catId}</Badge>
-                <div className="flex items-center gap-3">
-                  <span className="text-sm text-muted-foreground">
-                    {cat.correct} / {cat.total}
-                  </span>
-                  <span className="w-16 text-end font-bold">{formatPercent(cat.percent)}</span>
+            {Object.entries(result.by_category).map(([catId, cat]) => {
+              const catName = categoryNames.get(catId) ?? catId
+              return (
+                <div key={catId} className="flex items-center justify-between">
+                  <Badge className={categoryBadgeClass(catName)}>{catName}</Badge>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm text-muted-foreground">
+                      {cat.correct} / {cat.total}
+                    </span>
+                    <span className="w-16 text-end font-bold">{formatPercent(cat.percent)}</span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </Card>
       )}
 
       <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-        <Link to="/" className="btn btn-primary">
-          <RotateCcw className="h-4 w-4" />
-          استعرض الامتحانات
-        </Link>
-        <Link to="/" className="btn btn-ghost">
-          الرئيسية
-        </Link>
+        {passed ? (
+          <>
+            <Link to="/" className="btn btn-primary">
+              <RotateCcw className="h-4 w-4" />
+              استعرض الامتحانات
+            </Link>
+            <Link to="/" className="btn btn-ghost">
+              الرئيسية
+            </Link>
+          </>
+        ) : (
+          <Link to="/" className="btn btn-primary">
+            <Home className="h-4 w-4" />
+            العودة إلى الرئيسية
+          </Link>
+        )}
       </div>
 
       <h3 className="mt-10 mb-4 text-lg font-extrabold">مراجعة الإجابات</h3>

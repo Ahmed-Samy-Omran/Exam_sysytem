@@ -157,6 +157,14 @@ export class MockRepository implements ExamRepository {
       explanations: att.explanations,
     })
     result.attempt_id = attemptId
+    const categoryNameById = new Map(this.categories.map((c) => [c.id, c.name]))
+    result.review = result.review.map((item) => ({
+      ...item,
+      question: {
+        ...item.question,
+        category_name: item.question.category_name ?? categoryNameById.get(item.question.category_id) ?? item.question.category_name,
+      },
+    }))
     att.status = 'submitted'
     att.score = result.score_percent
     att.submittedAt = new Date().toISOString()
