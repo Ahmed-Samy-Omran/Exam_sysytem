@@ -1,7 +1,5 @@
-import { useEffect, useState } from 'react'
-import { Calculator, Brain, Table2, ClipboardList, Play } from 'lucide-react'
-import { Card, LinkButton, Spinner } from '@/components/ui'
-import { getRepository } from '@/lib/repository/factory'
+import { Calculator, Brain, Table2, ClipboardList } from 'lucide-react'
+import { Card, LinkButton } from '@/components/ui'
 
 const features = [
   {
@@ -33,70 +31,15 @@ const features = [
   },
 ]
 
-const arrow = <span className="transition-transform group-hover:translate-x-1">←</span>
-
 export function HomePage() {
-  const [exams, setExams] = useState<{ id: string; title: string; slug: string; description: string | null }[] | null>(null)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    let cancelled = false
-    getRepository()
-      .getActivePublicExams()
-      .then((list) => {
-        if (!cancelled) setExams(list)
-      })
-      .catch(() => {
-        if (!cancelled) setError('تعذر تحميل قائمة الامتحانات المتاحة.')
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
   return (
     <main className="mx-auto max-w-4xl px-4 py-10 sm:py-16">
       <section className="text-center">
-        <span className="badge badge-muted mb-4">منصة تدريب ومراجعة</span>
-        <h1 className="text-4xl font-extrabold sm:text-5xl">اختبر معلوماتك في ثلاث مجالات</h1>
+        <h1 className="text-4xl font-extrabold sm:text-5xl">منصة التقييم للتوظيف</h1>
         <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
-          اختبار عشوائي من أسئلة المحاسبة والذكاء و Excel، مع نتيجة فورية ومراجعة مفصلة للأخطاء
-          وشرح الإجابة الصحيحة.
+          منصة يقيم من خلالها أصحاب العمل المتقدمين للوظائف — عند التقديم يُرسل إليك رابط
+          الامتحان وتؤديه مباشرةً من هنا.
         </p>
-      </section>
-
-      <section className="mt-8">
-        {error ? (
-          <p role="alert" className="text-center text-sm font-bold text-destructive">{error}</p>
-        ) : exams === null ? (
-          <Spinner label="جاري تحميل الامتحانات…" />
-        ) : exams.length > 0 ? (
-          <div className="mx-auto grid max-w-2xl gap-4">
-            {exams.map((exam) => (
-              <LinkButton
-                key={exam.id}
-                to={`/exam/start?exam=${encodeURIComponent(exam.slug || exam.id)}`}
-                className="group flex w-full items-center justify-between gap-3 !py-4 !px-5"
-              >
-                <span className="flex items-center gap-3 text-right">
-                  <Play className="h-5 w-5 shrink-0" />
-                  <span className="flex flex-col items-start gap-1">
-                    <span className="font-extrabold">{exam.title}</span>
-                    {exam.description ? (
-                      <span className="text-sm font-normal text-white/80">{exam.description}</span>
-                    ) : null}
-                  </span>
-                </span>
-                {arrow}
-              </LinkButton>
-            ))}
-          </div>
-        ) : (
-          <Card className="mx-auto max-w-xl text-center p-8">
-            <p className="font-bold">لا توجد امتحانات متاحة حاليًا</p>
-            <p className="mt-1 text-sm text-muted-foreground">ستظهر الامتحانات المنشورة هنا بمجرد توفرها.</p>
-          </Card>
-        )}
       </section>
 
       <section className="mt-10">
