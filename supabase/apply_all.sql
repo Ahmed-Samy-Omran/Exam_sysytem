@@ -342,8 +342,8 @@ declare
   aq_rec record;
   chosen uuid;
   ok boolean;
-  correct_count int := 0;
-  wrong_count int := 0;
+  v_correct_count int := 0;
+  v_wrong_count int := 0;
   unans_count int := 0;
   total_count int := 0;
   review jsonb := '[]'::jsonb;
@@ -380,10 +380,10 @@ begin
       unans_count := unans_count + 1;
     elsif chosen = aq_rec.correct_option_id then
       ok := true;
-      correct_count := correct_count + 1;
+      v_correct_count := v_correct_count + 1;
     else
       ok := false;
-      wrong_count := wrong_count + 1;
+      v_wrong_count := v_wrong_count + 1;
     end if;
 
     insert into public.attempt_answers (attempt_question_id, chosen_option_id, is_correct)
@@ -424,23 +424,23 @@ begin
     );
   end loop;
 
-  pct := case when total_count = 0 then 0 else round((correct_count::numeric / total_count) * 100, 2) end;
+  pct := case when total_count = 0 then 0 else round((v_correct_count::numeric / total_count) * 100, 2) end;
   passed := pct >= passing_score;
 
   update public.quiz_attempts
   set status = 'submitted',
       submitted_at = now(),
       score_percent = pct,
-      correct_count = correct_count,
-      wrong_count = wrong_count,
+      correct_count = v_correct_count,
+      wrong_count = v_wrong_count,
       unanswered_count = unans_count
   where id = a_id;
 
   return jsonb_build_object(
     'attempt_id', a_id,
     'total', total_count,
-    'correct', correct_count,
-    'wrong', wrong_count,
+    'correct', v_correct_count,
+    'wrong', v_wrong_count,
     'unanswered', unans_count,
     'score_percent', pct,
     'passed', passed,

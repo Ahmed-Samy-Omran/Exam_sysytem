@@ -1,6 +1,8 @@
--- Migration 0002: تصحيح الاختبار على الخادم (Server-side grading)
--- يستقبل إجابات المستخدم فقط، ويُرجع النتيجة والمراجعة.
--- الإجابات الصحيحة لا تغادر قاعدة البيانات إطلاقًا أثناء الاختبار.
+-- Fix: submit_attempt failed with "42702 column reference correct_count is ambiguous"
+-- Root cause: PL/pgSQL local variables `correct_count`/`wrong_count` shadow the
+-- quiz_attempts columns of the same name inside `UPDATE public.quiz_attempts`.
+-- Fix: renamed locals to v_correct_count / v_wrong_count, recurring everywhere.
+-- Run this in the Supabase SQL Editor (or re-run supabase/apply_all.sql which now includes it).
 
 create or replace function public.submit_attempt(
   a_id uuid,
@@ -33,9 +35,6 @@ begin
     raise exception 'تم تسليم هذه المحاولة من قبل';
   end if;
 
-  -- المؤقت: لا تسليم بعد انتهاء المهلة (تُحسب NON-answered للأسئلة المتجاوزة)
-  -- نمرّرها هنا (التصحيح يعتمد على ما أُجيب فعلاً)
-
   for aq_rec in
     select aq.*
     from public.attempt_questions aq
@@ -43,14 +42,12 @@ begin
     order by aq.display_order
   loop
     total_count := total_count + 1;
+    chosen := null;
 
-    begin
-      select (a->>'option_id')::uuid into chosen
-      from jsonb_array_elements(p_answers) a
-      where (a->>'question_id')::uuid = aq_rec.question_id
-      limit 1;
-    exception when others then chosen := null;
-    end;
+    select (a->>'option_id')::uuid into chosen
+    from jsonb_array_elements(p_answers) a
+    where (a->>'question_id')::uuid = aq_rec.question_id
+    limit 1;
 
     if chosen is null then
       ok := false;
@@ -66,7 +63,6 @@ begin
     insert into public.attempt_answers (attempt_question_id, chosen_option_id, is_correct)
     values (aq_rec.id, chosen, ok);
 
-    -- تجميع النتائج حسب القسم
     cat_key := aq_rec.category_id::text;
     cat_info := cat_totals->cat_key;
     if cat_info is null then
@@ -82,7 +78,6 @@ begin
         to_jsonb((cat_info->>'correct')::int + 1));
     end if;
 
-    -- بناء المراجعة (تُظهر الإجابة الصحيحة بعد التسليم فقط)
     review := review || jsonb_build_object(
       'question_id', aq_rec.question_id,
       'question_text', aq_rec.question_text_snapshot,
