@@ -40,21 +40,24 @@ export function AdminDashboardPage() {
   return (
     <div>
       <PageHeader title="نظرة عامة" subtitle="ملخص لوحة تحكم المدير" />
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid w-full max-w-full grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4">
         {cards.map((c) => (
-          <Card key={c.label} className="flex items-center gap-3 p-4 sm:p-5">
-            <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+          <Card
+            key={c.label}
+            className="flex w-full max-w-full items-center gap-3 p-3 sm:p-5"
+          >
+            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary sm:h-11 sm:w-11">
               <c.icon className="h-5 w-5" />
             </span>
-            <div className="min-w-0">
-              <p className="text-2xl font-extrabold leading-tight">{c.value}</p>
-              <p className="truncate text-sm font-bold text-muted-foreground">{c.label}</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-xl font-extrabold leading-tight sm:text-2xl">{c.value}</p>
+              <p className="text-sm font-bold leading-snug text-muted-foreground sm:truncate">{c.label}</p>
             </div>
           </Card>
         ))}
       </div>
 
-      <div className="mb-3 mt-8 flex items-center gap-2">
+      <div className="mb-3 mt-6 flex items-center gap-2 sm:mt-8">
         <ClipboardList className="h-5 w-5 text-primary" />
         <h2 className="text-lg font-extrabold">الامتحانات ونشاط المتقدمين</h2>
       </div>
@@ -63,7 +66,7 @@ export function AdminDashboardPage() {
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {exams.map((exam) => (
-            <Card key={exam.id} className="p-5">
+            <Card key={exam.id} className="p-4 sm:p-5">
               <div className="flex items-start justify-between gap-2">
                 <p className="font-extrabold leading-relaxed">{exam.title}</p>
                 <span className={`badge shrink-0 ${exam.is_active ? 'badge-success' : 'badge-muted'}`}>
@@ -91,7 +94,7 @@ export function AdminDashboardPage() {
         </div>
       )}
 
-      <h2 className="mb-3 mt-8 text-lg font-extrabold">آخر الاختبارات المكتملة</h2>
+      <h2 className="mb-3 mt-6 text-lg font-extrabold sm:mt-8">آخر الاختبارات المكتملة</h2>
       {recent.length === 0 ? (
         <EmptyState title="لا توجد محاولات حتى الآن" hint="عندما يبدأ المتقدمون الاختبارات وتُسلم نتائجهم تظهر هنا" />
       ) : (

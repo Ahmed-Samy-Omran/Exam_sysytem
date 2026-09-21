@@ -80,7 +80,7 @@ export function AdminLayout() {
         </div>
       </aside>
 
-      <div className="flex-1">
+      <div className="min-w-0 flex-1">
         <header className="flex items-center justify-between gap-3 border-b border-border bg-card px-4 py-2 max-sm:flex sm:hidden">
           <div className="flex items-center gap-2">
             <button
