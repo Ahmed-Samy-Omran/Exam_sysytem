@@ -42,10 +42,14 @@ export function AdminDashboardPage() {
       <PageHeader title="نظرة عامة" subtitle="ملخص لوحة تحكم المدير" />
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {cards.map((c) => (
-          <Card key={c.label} className="p-5">
-            <c.icon className="h-6 w-6 text-primary" />
-            <p className="mt-3 text-2xl font-extrabold">{c.value}</p>
-            <p className="text-sm font-bold text-muted-foreground">{c.label}</p>
+          <Card key={c.label} className="flex items-center gap-3 p-4 sm:p-5">
+            <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <c.icon className="h-5 w-5" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-2xl font-extrabold leading-tight">{c.value}</p>
+              <p className="truncate text-sm font-bold text-muted-foreground">{c.label}</p>
+            </div>
           </Card>
         ))}
       </div>
