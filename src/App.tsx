@@ -13,6 +13,7 @@ import { AdminCategoriesPage } from '@/pages/admin/AdminCategories'
 import { AdminSettingsPage } from '@/pages/admin/AdminSettings'
 import { AdminExamsPage } from '@/pages/admin/AdminExams'
 import { AdminAttemptDetailsPage } from '@/pages/admin/AdminAttemptDetails'
+import { AdminExamAttemptsPage } from '@/pages/admin/AdminExamAttempts'
 import { NotFoundPage } from '@/pages/NotFound'
 import { ModeBanner } from '@/components/ModeBanner'
 import { ExamStartPage } from '@/pages/ExamStartPage'
@@ -39,6 +40,7 @@ export default function App() {
             <Route path="categories" element={<AdminCategoriesPage />} />
             <Route path="settings" element={<AdminSettingsPage />} />
             <Route path="exams" element={<AdminExamsPage />} />
+            <Route path="exams/:examId/attempts" element={<AdminExamAttemptsPage />} />
             <Route path="attempts/:attemptId" element={<AdminAttemptDetailsPage />} />
           </Route>
           <Route path="/exam/start" element={<ExamStartPage />} />

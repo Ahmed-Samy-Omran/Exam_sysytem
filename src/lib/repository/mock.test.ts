@@ -95,6 +95,50 @@ describe('MockRepository — تفاصيل المحاولات للمدير', () =
     const repo = new MockRepository()
     await expect(repo.getAdminAttemptDetails('missing-id')).rejects.toThrow(/المحاولة غير موجودة/)
   })
+
+  it('يجمع محاولات متعددة لنفس الامتحان في سجل واحد فقط', async () => {
+    const repo = new MockRepository()
+    for (const [name, email] of [
+      ['أحمد', 'a@example.com'],
+      ['سارة', 's@example.com'],
+    ] as const) {
+      const result = await repo.createCandidateAttempt(name, email, 'exam-default')
+      const quiz = await repo.getAttempt(result.attempt_id)
+      const answers = { [quiz.questions[0]!.question_id]: quiz.questions[0]!.options[0]!.option_id }
+      await repo.submitAttempt(result.attempt_id, answers, 70)
+    }
+
+    const summaries = await repo.getExamAttemptSummaries()
+    const matches = summaries.filter((e) => e.title === 'اختبار تدريبي شامل')
+    expect(matches).toHaveLength(1)
+    expect(matches[0]!.attempts).toBe(2)
+    expect(matches[0]!.completed).toBe(2)
+    expect(matches[0]!.avgScore).not.toBeNull()
+  })
+
+  it('لا يعد المحاولة الجارية مكتملة ولا ناجحة', async () => {
+    const repo = new MockRepository()
+    await repo.createCandidateAttempt('ريم', 'r@example.com', 'exam-default')
+
+    const summaries = await repo.getExamAttemptSummaries()
+    const exam = summaries.find((e) => e.id === 'exam-default')!
+    expect(exam.attempts).toBe(1)
+    expect(exam.completed).toBe(0)
+    expect(exam.inProgress).toBe(1)
+    expect(exam.passed).toBe(0)
+  })
+
+  it('يعيد محاولات امتحان محدد فقط عبر getAttemptsByExam', async () => {
+    const repo = new MockRepository()
+    await repo.createCandidateAttempt('أحمد', 'a@example.com', 'exam-default')
+    await repo.createCandidateAttempt('سارة', 's@example.com', 'exam-default')
+
+    const rows = await repo.getAttemptsByExam('exam-default')
+    expect(rows).toHaveLength(2)
+    expect(rows[0]!.exam_title).toBe('اختبار تدريبي شامل')
+    expect(rows.some((r) => r.candidate_name === 'أحمد')).toBe(true)
+    expect(await repo.getAttemptsByExam('missing-exam')).toEqual([])
+  })
 })
 
 describe('MockRepository — إنشاء امتحان منشور', () => {

@@ -12,6 +12,7 @@ import type {
 } from '@/types'
 import type { ExamRepository, ExamAttemptSummary, PublishedExamInput, QuestionFilter, QuizSetupItem, Stats } from '@/lib/repository'
 import { createQuiz, gradeQuiz } from '@/lib/quiz-engine'
+import { groupAttemptsByExam } from '@/lib/exam-activity'
 import { MOCK_CATEGORIES, MOCK_QUESTIONS, MOCK_SETTINGS } from '@/lib/mock/seedData'
 
 const DEMO_ADMIN = { name: 'omar', password: 'omar369@' }
@@ -520,13 +521,67 @@ export class MockRepository implements ExamRepository {
   }
 
   async getExamAttemptSummaries(): Promise<ExamAttemptSummary[]> {
+    const grouping = groupAttemptsByExam(
+      [...this.attempts.values()].map((a) => {
+        const exam = a.examId ? this.examsById.get(a.examId) : undefined
+        return {
+          id: a.attemptId,
+          exam_id: a.examId ?? null,
+          status: a.status as 'in_progress' | 'submitted',
+          score_percent: a.score,
+          passing_score: a.quiz.passing_score ?? exam?.passing_score ?? null,
+          started_at: a.quiz.created_at,
+          submitted_at: a.submittedAt,
+        }
+      }),
+    )
     return [...this.exams.values()]
       .sort((a, b) => (a.created_at ?? a.slug).localeCompare(b.created_at ?? b.slug) || a.title.localeCompare(b.title))
       .map((e) => {
-        const attempts = [...this.attempts.values()].filter((a) => a.examId === e.id && a.status === 'submitted')
-        const passed = attempts.filter((a) => a.score != null && a.score >= (e.passing_score ?? 70)).length
-        return { id: e.id, title: e.title, slug: e.slug, is_active: e.is_active, attempts: attempts.length, passed }
+        const g = grouping.get(e.id) ?? {
+          totalAttempts: 0,
+          completed: 0,
+          inProgress: 0,
+          passed: 0,
+          failed: 0,
+          avgScore: null,
+          lastAttemptAt: null,
+        }
+        return {
+          id: e.id,
+          title: e.title,
+          slug: e.slug,
+          is_active: e.is_active,
+          attempts: g.totalAttempts,
+          completed: g.completed,
+          inProgress: g.inProgress,
+          passed: g.passed,
+          failed: g.failed,
+          avgScore: g.avgScore,
+          lastAttemptAt: g.lastAttemptAt,
+        }
       })
+  }
+
+  async getAttemptsByExam(examId: string): Promise<AttemptRow[]> {
+    const exam = this.examsById.get(examId)
+    return [...this.attempts.values()]
+      .filter((a) => a.examId === examId)
+      .sort((a, b) => b.quiz.created_at.localeCompare(a.quiz.created_at))
+      .map((a) => ({
+        id: a.attemptId,
+        status: a.status as AttemptRow['status'],
+        score_percent: a.score,
+        correct_count: 0,
+        wrong_count: 0,
+        unanswered_count: 0,
+        started_at: a.quiz.created_at,
+        submitted_at: a.submittedAt,
+        candidate_name: a.candidateName ?? null,
+        candidate_email: a.candidateEmail ?? null,
+        exam_title: exam?.title ?? a.quiz.exam_title ?? null,
+        passing_score: a.quiz.passing_score ?? exam?.passing_score ?? null,
+      }))
   }
 
   async getAdminAttemptDetails(attemptId: string): Promise<AdminAttemptDetails> {

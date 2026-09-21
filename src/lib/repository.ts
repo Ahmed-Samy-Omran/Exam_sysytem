@@ -40,14 +40,24 @@ export interface QuestionFilter {
   search?: string
 }
 
-/** ملخص النشاط لكل امتحان منشور للوحة الإدارة */
+/** ملخص النشاط لكل امتحان منشور للوحة الإدارة (سجل واحد لكل امتحان فريد) */
 export interface ExamAttemptSummary {
   id: string
   title: string
   slug: string
   is_active: boolean
+  /** إجمالي المحاولات (المكتملة + الجارية + المتوقفة) */
   attempts: number
+  /** المحاولات المكتملة */
+  completed: number
+  /** المحاولات الجارية (لم تُحتسب في الناجحين/الراسبين) */
+  inProgress: number
   passed: number
+  failed: number
+  /** متوسط درجات المحاولات المكتملة */
+  avgScore: number | null
+  /** زمن آخر محاولة (أي حالة) */
+  lastAttemptAt: string | null
 }
 
 /** بوابة البيانات: تنفيذ Supabase، أو تنفيذ محلي للتطوير/الاختبار */
@@ -73,6 +83,7 @@ export interface ExamRepository {
   getStats(): Promise<Stats>
   getRecentAttempts(limit: number): Promise<AttemptRow[]>
   getExamAttemptSummaries(): Promise<ExamAttemptSummary[]>
+  getAttemptsByExam(examId: string): Promise<AttemptRow[]>
   getAdminAttemptDetails(attemptId: string): Promise<AdminAttemptDetails>
 
   // ---- Candidate entry ----

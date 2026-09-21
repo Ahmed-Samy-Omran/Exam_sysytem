@@ -20,6 +20,7 @@ import type {
   QuizSetupItem,
   Stats,
 } from '@/lib/repository'
+import { groupAttemptsByExam } from '@/lib/exam-activity'
 
 interface AttemptResponse {
   attempt_id: string
@@ -498,21 +499,63 @@ export class SupabaseRepository implements ExamRepository {
     if (eErr) throw eErr
     const { data: sub, error: sErr } = (await this.sb
       .from('quiz_attempts')
-      .select('exam_id, score_percent, passing_score')
-      .eq('status', 'submitted')) as any
+      .select('exam_id, status, score_percent, passing_score, started_at, submitted_at')) as any
     if (sErr) throw sErr
-    const map = new Map<string, { attempts: number; passed: number }>()
-    for (const row of sub ?? []) {
-      if (!row.exam_id) continue
-      const cur = map.get(row.exam_id) ?? { attempts: 0, passed: 0 }
-      cur.attempts += 1
-      const score = Number(row.score_percent)
-      if (Number.isFinite(score) && score >= (Number(row.passing_score) || 70)) cur.passed += 1
-      map.set(row.exam_id, cur)
-    }
+    const grouping = groupAttemptsByExam(
+      ((sub ?? []) as any[]).map((row) => ({
+        id: String(row.id),
+        exam_id: row.exam_id ? String(row.exam_id) : null,
+        status: row.status as 'in_progress' | 'submitted' | 'abandoned',
+        score_percent: row.score_percent == null ? null : Number(row.score_percent),
+        passing_score: row.passing_score == null ? null : Number(row.passing_score),
+        started_at: String(row.started_at ?? ''),
+        submitted_at: row.submitted_at == null ? null : String(row.submitted_at),
+      })),
+    )
+    const zero = { totalAttempts: 0, completed: 0, inProgress: 0, passed: 0, failed: 0, avgScore: null, lastAttemptAt: null }
     return (exams ?? []).map((e: any) => {
-      const m = map.get(e.id) ?? { attempts: 0, passed: 0 }
-      return { id: e.id, title: e.title, slug: e.slug, is_active: e.is_active, attempts: m.attempts, passed: m.passed }
+      const g = grouping.get(e.id) ?? zero
+      return {
+        id: e.id,
+        title: e.title,
+        slug: e.slug,
+        is_active: e.is_active,
+        attempts: g.totalAttempts,
+        completed: g.completed,
+        inProgress: g.inProgress,
+        passed: g.passed,
+        failed: g.failed,
+        avgScore: g.avgScore,
+        lastAttemptAt: g.lastAttemptAt,
+      }
+    })
+  }
+
+  async getAttemptsByExam(examId: string): Promise<AttemptRow[]> {
+    const { data, error } = (await this.sb
+      .from('quiz_attempts' as any)
+      .select(
+        'id, status, score_percent, correct_count, wrong_count, unanswered_count, started_at, submitted_at, candidate_name, candidate_email, exams ( title, passing_score )',
+      )
+      .eq('exam_id', examId)
+      .order('started_at', { ascending: false })) as any
+    if (error) throw error
+    return ((data ?? []) as any[]).map((a) => {
+      const exam = a.exams as { title?: string; passing_score?: number } | null | undefined
+      return {
+        id: a.id,
+        status: a.status as AttemptRow['status'],
+        score_percent: a.score_percent,
+        correct_count: a.correct_count,
+        wrong_count: a.wrong_count,
+        unanswered_count: a.unanswered_count,
+        started_at: a.started_at,
+        submitted_at: a.submitted_at,
+        candidate_name: a.candidate_name ?? null,
+        candidate_email: a.candidate_email ?? null,
+        exam_title: exam?.title ?? null,
+        passing_score: exam?.passing_score ?? null,
+      }
     })
   }
 
