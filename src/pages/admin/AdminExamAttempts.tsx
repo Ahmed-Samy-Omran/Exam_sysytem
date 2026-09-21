@@ -42,9 +42,9 @@ export function AdminExamAttemptsPage() {
         <PageHeader title="محاولات الامتحان" />
         <Card className="p-8 text-center">
           <p className="font-bold text-destructive">{error}</p>
-          <Link to="/admin" className="btn btn-primary mt-6">
+          <Link to="/admin/exams" className="btn btn-primary mt-6">
             <ArrowRight className="h-4 w-4" />
-            العودة للوحة التحكم
+            العودة لإدارة الامتحانات
           </Link>
         </Card>
       </div>
@@ -58,9 +58,9 @@ export function AdminExamAttemptsPage() {
         title="محاولات الامتحان"
         subtitle={examTitle ?? undefined}
         actions={
-          <Link to="/admin" className="btn btn-ghost">
+          <Link to="/admin/exams" className="btn btn-ghost">
             <ArrowRight className="h-4 w-4" />
-            لوحة التحكم
+            إدارة الامتحانات
           </Link>
         }
       />

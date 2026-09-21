@@ -1,7 +1,9 @@
 import { useEffect, useState, useCallback } from 'react'
-import { Plus, Edit2, Trash2, Copy, Eye, EyeOff, RotateCcw } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Plus, Edit2, Trash2, Copy, Eye, EyeOff, RotateCcw, Users } from 'lucide-react'
 import { Button, Card, PageHeader, Spinner } from '@/components/ui'
 import { getRepository } from '@/lib/repository/factory'
+import type { ExamAttemptSummary } from '@/lib/repository'
 import type { Category } from '@/types'
 
 // ---- Shared types ----
@@ -169,6 +171,7 @@ async function deleteExam(repo: any, id: string) {
 export function AdminExamsPage() {
   const [exams, setExams] = useState<ExamWithSections[]>([])
   const [categories, setCategories] = useState<Category[]>([])
+  const [attemptsByExam, setAttemptsByExam] = useState<Record<string, ExamAttemptSummary>>({})
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -192,6 +195,8 @@ export function AdminExamsPage() {
       const cats = await repo.listCategoriesAdmin()
       setCategories(cats)
       const exms = await getExamsAdmin(repo)
+      const summaries = (await repo.getExamAttemptSummaries()) as ExamAttemptSummary[]
+      setAttemptsByExam(Object.fromEntries(summaries.map((s) => [s.id, s])))
       setExams(exms.map((e: any) => ({
         ...e,
         sections: e.sections.map((s: any) => ({
@@ -441,12 +446,13 @@ export function AdminExamsPage() {
       )}
 
       <Card className="overflow-x-auto">
-        <table className="w-full min-w-[600px] text-sm">
+        <table className="w-full min-w-[760px] text-sm">
           <thead>
             <tr className="border-b border-border text-start text-muted-foreground">
               <th className="p-3 text-start font-bold">العنوان</th>
               <th className="p-3 text-start font-bold">الرابط</th>
               <th className="p-3 text-start font-bold">الأقسام</th>
+              <th className="p-3 text-start font-bold">المحاولات</th>
               <th className="p-3 text-start font-bold">الحالة</th>
               <th className="p-3 text-start bold">الإجراءات</th>
             </tr>
@@ -454,57 +460,75 @@ export function AdminExamsPage() {
           <tbody>
             {exams.length === 0 ? (
               <tr>
-                <td colSpan={5} className="p-10 text-center text-muted-foreground">
+                <td colSpan={6} className="p-10 text-center text-muted-foreground">
                   لا توجد امتحانات بعد. أنشئ الامتحان الأول.
                 </td>
               </tr>
             ) : (
-              exams.map((exam) => (
-                <tr key={exam.id} className="border-b border-border last:border-0">
-                  <td className="p-3 font-bold">{exam.title}</td>
-                  <td className="p-3 text-xs font-mono text-muted-foreground">{exam.slug}</td>
-                  <td className="p-3">
-                    <div className="flex flex-wrap gap-1">
-                      {exam.sections.map((s) => (
-                        <span key={s.id} className="badge badge-muted">
-                          {s.category_name} ({s.question_count})
-                        </span>
-                      ))}
-                    </div>
-                  </td>
-                  <td className="p-3">
-                    <button
-                      type="button"
-                      onClick={() => toggleActive(exam)}
-                      className={exam.is_active ? activeClass : inactiveClass}
-                    >
-                      {exam.is_active ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
-                      {exam.is_active ? 'نشط' : 'غير نشط'}
-                    </button>
-                  </td>
-                  <td className="p-3 space-x-1">
-                    {exam.is_active && (
-                      <Button variant="outline" onClick={() => copyLink(exam)} title="نسخ الرابط">
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                    )}
-                    {editingId !== exam.id && (
-                      <Button variant="outline" onClick={() => openEdit(exam)}>
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                    {deletingId === exam.id ? (
-                      <Button variant="danger" onClick={() => confirmDelete(exam.id)}>
-                        <RotateCcw className="h-4 w-4" /> تأكيد الحذف
-                      </Button>
-                    ) : (
-                      <Button variant="ghost" onClick={() => setDeletingId(exam.id)} className="text-destructive">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </td>
-                </tr>
-              ))
+              exams.map((exam) => {
+                const summary = attemptsByExam[exam.id]
+                return (
+                  <tr key={exam.id} className="border-b border-border last:border-0">
+                    <td className="p-3 font-bold">{exam.title}</td>
+                    <td className="p-3 text-xs font-mono text-muted-foreground">{exam.slug}</td>
+                    <td className="p-3">
+                      <div className="flex flex-wrap gap-1">
+                        {exam.sections.map((s) => (
+                          <span key={s.id} className="badge badge-muted">
+                            {s.category_name} ({s.question_count})
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="p-3">
+                      {summary && summary.attempts > 0 ? (
+                        <>
+                          <span className="font-extrabold">{summary.attempts}</span>
+                          <span className="ms-1 text-xs font-bold text-muted-foreground">
+                            ({summary.completed} مكتملة{summary.inProgress > 0 ? ` · ${summary.inProgress} جارية` : ''})
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-xs font-bold text-muted-foreground">لا محاولات</span>
+                      )}
+                    </td>
+                    <td className="p-3">
+                      <button
+                        type="button"
+                        onClick={() => toggleActive(exam)}
+                        className={exam.is_active ? activeClass : inactiveClass}
+                      >
+                        {exam.is_active ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                        {exam.is_active ? 'نشط' : 'غير نشط'}
+                      </button>
+                    </td>
+                    <td className="p-3 space-x-1">
+                      <Link to={`/admin/exams/${exam.id}/attempts`} className="btn btn-outline px-2 py-1" title="عرض المرشحين والنتائج">
+                        <Users className="h-4 w-4" />
+                      </Link>
+                      {exam.is_active && (
+                        <Button variant="outline" onClick={() => copyLink(exam)} title="نسخ الرابط">
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {editingId !== exam.id && (
+                        <Button variant="outline" onClick={() => openEdit(exam)}>
+                          <Edit2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {deletingId === exam.id ? (
+                        <Button variant="danger" onClick={() => confirmDelete(exam.id)}>
+                          <RotateCcw className="h-4 w-4" /> تأكيد الحذف
+                        </Button>
+                      ) : (
+                        <Button variant="ghost" onClick={() => setDeletingId(exam.id)} className="text-destructive">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </td>
+                  </tr>
+                )
+              })
             )}
           </tbody>
         </table>
