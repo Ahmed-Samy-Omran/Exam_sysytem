@@ -10,7 +10,7 @@ import type {
   QuizResult,
   QuizSettings,
 } from '@/types'
-import type { ExamRepository, ExamAttemptSummary, QuestionFilter, QuizSetupItem, Stats } from '@/lib/repository'
+import type { ExamRepository, ExamAttemptSummary, PublishedExamInput, QuestionFilter, QuizSetupItem, Stats } from '@/lib/repository'
 import { createQuiz, gradeQuiz } from '@/lib/quiz-engine'
 import { MOCK_CATEGORIES, MOCK_QUESTIONS, MOCK_SETTINGS } from '@/lib/mock/seedData'
 
@@ -341,6 +341,26 @@ export class MockRepository implements ExamRepository {
       .filter((e) => e.is_active)
       .sort((a, b) => (a.created_at ?? a.slug).localeCompare(b.created_at ?? b.slug) || a.title.localeCompare(b.title))
       .map((e) => ({ id: e.id, title: e.title, slug: e.slug, description: e.description ?? null }))
+  }
+
+  async createPublishedExam(input: PublishedExamInput): Promise<{ id: string; title: string; slug: string }> {
+    if (this.exams.has(input.slug)) throw new Error('يوجد امتحان بهذا الرابط بالفعل')
+    const exam: MockExam = {
+      id: crypto.randomUUID(),
+      title: input.title,
+      description: input.description,
+      instructions: input.instructions,
+      slug: input.slug,
+      is_active: true,
+      passing_score: input.passing_score,
+      time_limit_minutes: input.time_limit_minutes,
+      allow_retakes: input.allow_retakes,
+      created_at: new Date().toISOString(),
+      sections: input.sections.map((s) => ({ ...s, id: crypto.randomUUID() })),
+    }
+    this.exams.set(exam.slug, exam)
+    this.examsById.set(exam.id, exam)
+    return { id: exam.id, title: exam.title, slug: exam.slug }
   }
 
   // ---------- إدارة ----------

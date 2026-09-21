@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { ClipboardList } from 'lucide-react'
-import { Badge, Button, Card, Field, PageHeader, Spinner } from '@/components/ui'
+import { Check, ClipboardList, Copy } from 'lucide-react'
+import { Badge, Button, Card, Field, Modal, PageHeader, Spinner } from '@/components/ui'
 import { categoryBadgeClass } from '@/lib/format'
 import { getRepository } from '@/lib/repository/factory'
-import type { Category } from '@/types'
+import type { Category, QuizSettings } from '@/types'
 
 interface CategoryExt extends Category {
   defaultCount: number
@@ -12,26 +11,29 @@ interface CategoryExt extends Category {
 }
 
 export function QuizSetupPage() {
-  const nav = useNavigate()
   const [cats, setCats] = useState<CategoryExt[]>([])
+  const [settings, setSettings] = useState<Record<string, QuizSettings>>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [mode, setMode] = useState<'all' | 'single'>('all')
   const [selectedSlug, setSelectedSlug] = useState<string>('')
   const [timerMin, setTimerMin] = useState<string>('30')
   const [busy, setBusy] = useState(false)
+  const [created, setCreated] = useState<{ title: string; slug: string; link: string } | null>(null)
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     ;(async () => {
       try {
         const repo = getRepository()
-        const [catsData, settings] = await Promise.all([repo.getPublicCategories(), repo.getSettingsBySlug()])
+        const [catsData, settingsData] = await Promise.all([repo.getPublicCategories(), repo.getSettingsBySlug()])
         const ext = catsData.map((c) => ({
           ...c,
-          defaultCount: settings[c.slug]?.question_count_default ?? 10,
-          timeLimit: settings[c.slug]?.time_limit_minutes ?? null,
+          defaultCount: settingsData[c.slug]?.question_count_default ?? 10,
+          timeLimit: settingsData[c.slug]?.time_limit_minutes ?? null,
         }))
         setCats(ext)
+        setSettings(settingsData)
         setSelectedSlug(ext[0]?.slug ?? '')
       } catch (e) {
         setError(e instanceof Error ? e.message : 'فشل تحميل البيانات')
@@ -60,15 +62,37 @@ export function QuizSetupPage() {
     setBusy(true)
     setError(null)
     try {
-      const items =
-        mode === 'all'
-          ? activeCats.map((c) => ({ slug: c.slug, count: counts[c.slug] }))
-          : [{ slug: selectedSlug, count: counts[selectedSlug] ?? 1 }]
-      const quiz = await getRepository().createAttempt(items, timeoutValue)
-      nav(`/quiz/${quiz.attempt_id}`)
+      const repo = getRepository()
+      const selected = mode === 'all' ? activeCats : activeCats.filter((c) => c.slug === selectedSlug)
+      const exam = await repo.createPublishedExam({
+        title: mode === 'all' ? 'اختبار سريع شامل' : `اختبار سريع: ${selected[0]?.name ?? 'قسم واحد'}`,
+        slug: `quick-${Date.now().toString(36)}`,
+        description: null,
+        instructions: 'أجب على الأسئلة في الوقت المحدد. بعد التسليم تحصل على النتيجة والمراجعة الكاملة للإجابات.',
+        passing_score: Math.max(0, ...selected.map((c) => settings[c.slug]?.passing_score ?? 70)),
+        time_limit_minutes: timeoutValue,
+        allow_retakes: true,
+        sections: selected.map((c) => ({ category_id: c.id, question_count: counts[c.slug] })),
+      })
+      setCopied(false)
+      setCreated({
+        title: exam.title,
+        slug: exam.slug,
+        link: `${window.location.origin}${window.location.pathname}#/exam/start?exam=${exam.slug}`,
+      })
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'تعذر إنشاء الاختبار')
+      setError(e instanceof Error ? e.message : 'تعذر إنشاء الامتحان')
       setBusy(false)
+    }
+  }
+
+  async function copyLink() {
+    if (!created) return
+    try {
+      await navigator.clipboard.writeText(created.link)
+      setCopied(true)
+    } catch {
+      /* تجاهل فشل النسخ */
     }
   }
 
@@ -77,7 +101,7 @@ export function QuizSetupPage() {
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8">
-      <PageHeader title="إعداد الاختبار" subtitle="اختر الأقسام وعدد الأسئلة ثم ابدأ" />
+      <PageHeader title="إعداد الاختبار" subtitle="اختر الأقسام وعدد الأسئلة ثم أنشئ رابط الامتحان لإرساله للمتقدمين" />
 
       <Card className="p-5">
         <h2 className="mb-3 font-bold">نوع الاختبار</h2>
@@ -90,7 +114,7 @@ export function QuizSetupPage() {
             }`}
           >
             <p className="font-bold">اختبار شامل</p>
-            <p className="mt-1 text-sm text-muted-foreground">جميع الأقسام الثلاثة بأسئلة من كل قسم</p>
+            <p className="mt-1 text-sm text-muted-foreground">جميع الأقسام بأسئلة من كل قسم</p>
           </button>
           <button
             type="button"
@@ -171,11 +195,47 @@ export function QuizSetupPage() {
             إجمالي الأسئلة: {total}
           </p>
           <Button onClick={start} disabled={busy || total < 1}>
-            {busy ? 'جارٍ تجهيز الاختبار…' : 'ابدأ الاختبار'}
+            {busy ? 'جارٍ إنشاء الرابط…' : 'إنشاء رابط الامتحان'}
           </Button>
         </div>
         {error ? <p role="alert" className="mt-3 text-sm font-bold text-destructive">{error}</p> : null}
       </Card>
+
+      <Modal
+        open={created != null}
+        title="تم إنشاء الامتحان"
+        onClose={() => setCreated(null)}
+        footer={
+          <>
+            {created ? (
+              <a href={created.link} target="_blank" rel="noreferrer" className="btn btn-ghost">
+                معاينة
+              </a>
+            ) : null}
+            <Button onClick={() => setCreated(null)}>تم</Button>
+          </>
+        }
+      >
+        {created ? (
+          <div>
+            <p className="font-bold">{created.title}</p>
+            <p className="mt-1 text-sm text-muted-foreground">أرسل هذا الرابط للمتقدم ليبدأ الامتحان:</p>
+            <div className="mt-3 flex items-center gap-2">
+              <input
+                readOnly
+                dir="ltr"
+                className="input flex-1 text-xs font-mono"
+                value={created.link}
+                onClick={(e) => (e.target as HTMLInputElement).select()}
+              />
+              <Button variant="outline" onClick={copyLink} disabled={copied} className="shrink-0">
+                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                {copied ? 'تم النسخ' : 'نسخ الرابط'}
+              </Button>
+            </div>
+          </div>
+        ) : null}
+      </Modal>
     </main>
   )
 }

@@ -15,6 +15,7 @@ import type { Database } from '@/types/supabase'
 import type {
   ExamRepository,
   ExamAttemptSummary,
+  PublishedExamInput,
   QuestionFilter,
   QuizSetupItem,
   Stats,
@@ -253,6 +254,31 @@ export class SupabaseRepository implements ExamRepository {
       slug: r.slug,
       description: r.description ?? null,
     }))
+  }
+
+  async createPublishedExam(input: PublishedExamInput): Promise<{ id: string; title: string; slug: string }> {
+    const { data: exam, error: examErr } = await this.sb
+      .from('exams')
+      .insert({
+        title: input.title,
+        slug: input.slug,
+        description: input.description,
+        instructions: input.instructions,
+        passing_score: input.passing_score,
+        time_limit_minutes: input.time_limit_minutes,
+        allow_retakes: input.allow_retakes,
+        is_active: true,
+      })
+      .select('*')
+      .single()
+    if (examErr) throw examErr
+    if (input.sections.length) {
+      const { error: secErr } = await this.sb
+        .from('exam_sections')
+        .insert(input.sections.map((s) => ({ exam_id: exam.id, ...s })))
+      if (secErr) throw secErr
+    }
+    return { id: exam.id, title: exam.title, slug: exam.slug }
   }
 
   // ---------- إدارة ----------

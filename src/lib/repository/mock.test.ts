@@ -96,3 +96,53 @@ describe('MockRepository — تفاصيل المحاولات للمدير', () =
     await expect(repo.getAdminAttemptDetails('missing-id')).rejects.toThrow(/المحاولة غير موجودة/)
   })
 })
+
+describe('MockRepository — إنشاء امتحان منشور', () => {
+  it('ينشئ امتحانًا كامل الأقسام ويظهر في الامتحانات العامة', async () => {
+    const repo = new MockRepository()
+    const cats = await repo.listCategoriesAdmin()
+
+    const created = await repo.createPublishedExam({
+      title: 'اختبار سريع شامل',
+      slug: 'quick-new',
+      description: null,
+      instructions: 'أجب وفق التعليمات',
+      passing_score: 70,
+      time_limit_minutes: 30,
+      allow_retakes: true,
+      sections: cats.map((c) => ({ category_id: c.id, question_count: 3 })),
+    })
+
+    expect(created.slug).toBe('quick-new')
+    const bySlug = await repo.getExamBySlug('quick-new')
+    expect(bySlug?.title).toBe('اختبار سريع شامل')
+    expect(bySlug?.time_limit_minutes).toBe(30)
+    expect(await repo.getActivePublicExams()).toContainEqual(expect.objectContaining({ slug: 'quick-new' }))
+  })
+
+  it('يرفض رابطًا مكررًا', async () => {
+    const repo = new MockRepository()
+    await repo.createPublishedExam({
+      title: 'أ',
+      slug: 'dup',
+      description: null,
+      instructions: '',
+      passing_score: 70,
+      time_limit_minutes: null,
+      allow_retakes: true,
+      sections: [],
+    })
+    await expect(
+      repo.createPublishedExam({
+        title: 'ب',
+        slug: 'dup',
+        description: null,
+        instructions: '',
+        passing_score: 70,
+        time_limit_minutes: null,
+        allow_retakes: true,
+        sections: [],
+      }),
+    ).rejects.toThrow(/بالفعل/)
+  })
+})

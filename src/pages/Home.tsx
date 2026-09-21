@@ -69,6 +69,10 @@ export function HomePage() {
           الإجابة الصحيحة والتصحيح لكل خطأ.
         </p>
       </section>
+
+      <footer className="mt-12 text-center text-[11px] text-muted-foreground/70">
+        صُنعت بواسطة <span className="font-semibold text-muted-foreground">Ahmed Samy Omran</span>
+      </footer>
     </main>
   )
 }

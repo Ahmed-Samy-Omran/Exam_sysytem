@@ -15,6 +15,18 @@ export interface QuizSetupItem {
   count: number
 }
 
+/** بيانات امتحان منشور يُنشأ من لوحة الإدارة ليرسله المدير للمتقدمين */
+export interface PublishedExamInput {
+  title: string
+  slug: string
+  description: string | null
+  instructions: string
+  passing_score: number
+  time_limit_minutes: number | null
+  allow_retakes: boolean
+  sections: { category_id: string; question_count: number }[]
+}
+
 export interface Stats {
   categories: number
   activeQuestions: number
@@ -68,4 +80,5 @@ export interface ExamRepository {
   getExamBySlug(slug: string): Promise<{ id: string; title: string; description: string | null; instructions: string; is_active: boolean; passing_score: number; time_limit_minutes: number | null; allow_retakes: boolean } | null>
   getExamById(id: string): Promise<{ id: string; title: string; description: string | null; instructions: string; is_active: boolean; passing_score: number; time_limit_minutes: number | null; allow_retakes: boolean } | null>
   getActivePublicExams(): Promise<{ id: string; title: string; slug: string; description: string | null }[]>
+  createPublishedExam(input: PublishedExamInput): Promise<{ id: string; title: string; slug: string }>
 }
