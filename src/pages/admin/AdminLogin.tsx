@@ -49,9 +49,17 @@ export function AdminLoginPage() {
           <Button onClick={login} disabled={busy || !username || !password} className="w-full">
             {busy ? 'جارٍ الدخول…' : 'دخول'}
           </Button>
-          <p className="text-center text-xs text-muted-foreground">
-            للتجربة: {isMock ? `name: ${demo.user} / pass: ${demo.pass}` : `${demo.user} / ${demo.pass}`}
-          </p>
+          <div className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-xs leading-relaxed">
+            <p className="font-bold text-muted-foreground">بيانات التجربة</p>
+            <p className="mt-1">
+              <span className="font-bold text-foreground">{isMock ? 'الاسم' : 'البريد الإلكتروني'}:</span>{' '}
+              <span dir="ltr" className="text-muted-foreground">{demo.user}</span>
+            </p>
+            <p className="mt-0.5">
+              <span className="font-bold text-foreground">كلمة المرور:</span>{' '}
+              <span dir="ltr" className="text-muted-foreground">{demo.pass}</span>
+            </p>
+          </div>
         </div>
       </Card>
     </main>
