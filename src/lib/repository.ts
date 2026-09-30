@@ -15,6 +15,20 @@ export interface QuizSetupItem {
   count: number
 }
 
+/** توزيع أسئلة القسم حسب مستوى الصعوبة (سهل / متوسط / متقدم) */
+export interface QuestionDifficultyCounts {
+  easy: number
+  medium: number
+  hard: number
+}
+
+/** قسم داخل امتحان منشور؛ difficulty_counts يفعّل السحب المتدرج عند تحديده */
+export interface PublishedExamSection {
+  category_id: string
+  question_count: number
+  difficulty_counts?: QuestionDifficultyCounts | null
+}
+
 /** بيانات امتحان منشور يُنشأ من لوحة الإدارة ليرسله المدير للمتقدمين */
 export interface PublishedExamInput {
   title: string
@@ -24,7 +38,7 @@ export interface PublishedExamInput {
   passing_score: number
   time_limit_minutes: number | null
   allow_retakes: boolean
-  sections: { category_id: string; question_count: number }[]
+  sections: PublishedExamSection[]
 }
 
 export interface Stats {

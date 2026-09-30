@@ -4,6 +4,7 @@ import { Plus, Edit2, Trash2, Copy, Eye, EyeOff, RotateCcw, Users } from 'lucide
 import { Button, Card, PageHeader, Spinner } from '@/components/ui'
 import { getRepository } from '@/lib/repository/factory'
 import type { ExamAttemptSummary } from '@/lib/repository'
+import type { QuestionDifficultyCounts } from '@/lib/repository'
 import type { Category } from '@/types'
 
 // ---- Shared types ----
@@ -25,10 +26,11 @@ interface ExamSection {
   id: string
   category_id: string
   question_count: number
+  difficulty_counts?: QuestionDifficultyCounts | null
 }
 
 interface ExamWithSections extends ExamRow {
-  sections: { id: string; category_id: string; category_name: string; question_count: number }[]
+  sections: { id: string; category_id: string; category_name: string; question_count: number; difficulty_counts?: QuestionDifficultyCounts | null }[]
 }
 
 // ---- Repository extensions ----
@@ -42,8 +44,8 @@ async function getExamsAdmin(repo: any): Promise<
     const rows = data as ExamRow[]
     const out: (ExamRow & { sections: ExamSection[] })[] = []
     for (const r of rows) {
-      const { data: sec } = await repo.sb.from('exam_sections').select('id, category_id, question_count').eq('exam_id', r.id)
-      out.push({ ...r, sections: (sec ?? []).map((s: any) => ({ id: s.id, category_id: s.category_id, question_count: s.question_count })) })
+      const { data: sec } = await repo.sb.from('exam_sections').select('id, category_id, question_count, difficulty_counts').eq('exam_id', r.id)
+      out.push({ ...r, sections: (sec ?? []).map((s: any) => ({ id: s.id, category_id: s.category_id, question_count: s.question_count, difficulty_counts: s.difficulty_counts ?? null })) })
     }
     return out
   }
@@ -51,7 +53,7 @@ async function getExamsAdmin(repo: any): Promise<
     id: e.id, title: e.title, description: e.description, instructions: e.instructions,
     slug: e.slug, is_active: e.is_active, passing_score: e.passing_score,
     time_limit_minutes: e.time_limit_minutes, allow_retakes: e.allow_retakes, created_at: e.created_at,
-    sections: e.sections.map((s: any) => ({ id: s.id, category_id: s.category_id, question_count: s.question_count })),
+    sections: e.sections.map((s: any) => ({ id: s.id, category_id: s.category_id, question_count: s.question_count, difficulty_counts: s.difficulty_counts ?? null })),
   }))
 }
 
@@ -62,10 +64,10 @@ async function getExamByIdAdmin(repo: any, id: string): Promise<
     const { data, error } = await repo.sb.from('exams').select('*').eq('id', id).maybeSingle()
     if (error) throw error
     if (!data) throw new Error('الامتحان غير موجود')
-    const { data: sec } = await repo.sb.from('exam_sections').select('id, category_id, question_count').eq('exam_id', id)
+    const { data: sec } = await repo.sb.from('exam_sections').select('id, category_id, question_count, difficulty_counts').eq('exam_id', id)
     return {
       ...data as ExamRow,
-      sections: (sec ?? []).map((s: any) => ({ id: s.id, category_id: s.category_id, question_count: s.question_count })),
+      sections: (sec ?? []).map((s: any) => ({ id: s.id, category_id: s.category_id, question_count: s.question_count, difficulty_counts: s.difficulty_counts ?? null })),
     }
   }
   const e = repo.examsById.get(id)
@@ -74,7 +76,7 @@ async function getExamByIdAdmin(repo: any, id: string): Promise<
     id: e.id, title: e.title, description: e.description, instructions: e.instructions,
     slug: e.slug, is_active: e.is_active, passing_score: e.passing_score,
     time_limit_minutes: e.time_limit_minutes, allow_retakes: e.allow_retakes, created_at: e.created_at,
-    sections: e.sections.map((s: any) => ({ id: s.id, category_id: s.category_id, question_count: s.question_count })),
+    sections: e.sections.map((s: any) => ({ id: s.id, category_id: s.category_id, question_count: s.question_count, difficulty_counts: s.difficulty_counts ?? null })),
   }
 }
 
@@ -187,7 +189,7 @@ export function AdminExamsPage() {
   const [formPassingScore, setFormPassingScore] = useState('70')
   const [formTimeLimit, setFormTimeLimit] = useState('')
   const [formAllowRetakes, setFormAllowRetakes] = useState(true)
-  const [formSections, setFormSections] = useState<{ category_id: string; question_count: string }[]>([])
+  const [formSections, setFormSections] = useState<{ category_id: string; question_count: string; graded: boolean; easy: string; medium: string; hard: string }[]>([])
 
   const load = useCallback(async () => {
     try {
@@ -227,8 +229,15 @@ export function AdminExamsPage() {
           setFormAllowRetakes(exam.allow_retakes)
           setFormSections(
             exam.sections.length
-              ? exam.sections.map((s: any) => ({ category_id: s.category_id, question_count: String(s.question_count) }))
-              : [{ category_id: categories[0]?.id ?? '', question_count: '5' }],
+              ? exam.sections.map((s: any) => ({
+                  category_id: s.category_id,
+                  question_count: String(s.question_count),
+                  graded: !!s.difficulty_counts,
+                  easy: String(s.difficulty_counts?.easy ?? 0),
+                  medium: String(s.difficulty_counts?.medium ?? 0),
+                  hard: String(s.difficulty_counts?.hard ?? 0),
+                }))
+              : [{ category_id: categories[0]?.id ?? '', question_count: '5', graded: false, easy: '0', medium: '0', hard: '0' }],
           )
         } catch (e: any) {
           setError(e.message ?? 'فشل تحميل الامتحان')
@@ -242,7 +251,7 @@ export function AdminExamsPage() {
         setFormPassingScore('70')
         setFormTimeLimit('')
         setFormAllowRetakes(true)
-        setFormSections([{ category_id: categories[0]?.id ?? '', question_count: '5' }])
+        setFormSections([{ category_id: categories[0]?.id ?? '', question_count: '5', graded: false, easy: '0', medium: '0', hard: '0' }])
         setSuccess(null)
         setError(null)
       }
@@ -255,14 +264,14 @@ export function AdminExamsPage() {
   }, [load])
 
   function addSection() {
-    setFormSections((prev) => [...prev, { category_id: categories[0]?.id ?? '', question_count: '5' }])
+    setFormSections((prev) => [...prev, { category_id: categories[0]?.id ?? '', question_count: '5', graded: false, easy: '0', medium: '0', hard: '0' }])
   }
 
   function removeSection(i: number) {
     setFormSections((prev) => prev.filter((_: any, idx) => idx !== i))
   }
 
-  function updateSection(i: number, field: 'category_id' | 'question_count', value: string) {
+  function updateSection(i: number, field: 'category_id' | 'question_count' | 'graded' | 'easy' | 'medium' | 'hard', value: string | boolean) {
     setFormSections((prev) => prev.map((s, idx) => (idx === i ? { ...s, [field]: value } : s)))
   }
 
@@ -294,13 +303,29 @@ export function AdminExamsPage() {
         passing_score: Math.min(100, Math.max(0, Number(formPassingScore) || 70)),
         time_limit_minutes: formTimeLimit.trim() === '' ? null : Math.max(1, Number(formTimeLimit) || 1),
         allow_retakes: formAllowRetakes,
-        sections: formSections
-          .filter((s) => s.category_id && Number(s.question_count) >= 1)
-          .map((s) => ({ category_id: s.category_id, question_count: Number(s.question_count) })),
+        sections: formSections.map((s) => {
+          const classic = {
+            category_id: s.category_id,
+            question_count: Math.max(1, Number(s.question_count) || 1),
+          }
+          if (!s.graded) return { ...classic, difficulty_counts: null }
+          const easy = Math.max(0, Number(s.easy) || 0)
+          const medium = Math.max(0, Number(s.medium) || 0)
+          const hard = Math.max(0, Number(s.hard) || 0)
+          if (easy + medium + hard < 1) {
+            throw new Error('عند تفعيل تدرج الصعوبة يجب تحديد سؤال واحد على الأقل (سهل أو متوسط أو متقدم)')
+          }
+          return {
+            category_id: s.category_id,
+            question_count: easy + medium + hard,
+            difficulty_counts: { easy, medium, hard },
+          }
+        }),
       }
       if (!examData.title) { setError('العنوان مطلوب'); setSaving(false); return }
       if (!examData.slug) { setError('الرابط مطلوب'); setSaving(false); return }
-      if (!examData.sections.length) { setError('يجب إضافة قسم واحد على الأقل'); setSaving(false); return }
+      const validSections = examData.sections.filter((s: any) => s.category_id)
+      if (!validSections.length) { setError('يجب إضافة قسم واحد على الأقل'); setSaving(false); return }
 
       if (editingId) {
         await updateExam(repo, editingId, examData)
@@ -430,8 +455,38 @@ export function AdminExamsPage() {
                       <option key={c.id} value={c.id}>{c.name}</option>
                     ))}
                   </select>
-                  <input type="number" min={1} max={50} className="input w-20" value={s.question_count} onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateSection(i, 'question_count', e.target.value)} />
-                  <span className="text-xs font-bold text-muted-foreground">سؤال</span>
+
+                  <label className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground">
+                    <input
+                      type="checkbox"
+                      checked={s.graded}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateSection(i, 'graded', e.target.checked)}
+                    />
+                    تدرج الصعوبة
+                  </label>
+
+                  {s.graded ? (
+                    <div className="flex items-center gap-2">
+                      <label className="flex items-center gap-1">
+                        <span className="text-xs font-bold text-muted-foreground">سهل</span>
+                        <input type="number" min={0} max={50} className="input w-16" value={s.easy} onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateSection(i, 'easy', e.target.value)} />
+                      </label>
+                      <label className="flex items-center gap-1">
+                        <span className="text-xs font-bold text-muted-foreground">متوسط</span>
+                        <input type="number" min={0} max={50} className="input w-16" value={s.medium} onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateSection(i, 'medium', e.target.value)} />
+                      </label>
+                      <label className="flex items-center gap-1">
+                        <span className="text-xs font-bold text-muted-foreground">متقدم</span>
+                        <input type="number" min={0} max={50} className="input w-16" value={s.hard} onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateSection(i, 'hard', e.target.value)} />
+                      </label>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1">
+                      <input type="number" min={1} max={50} className="input w-20" value={s.question_count} onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateSection(i, 'question_count', e.target.value)} />
+                      <span className="text-xs font-bold text-muted-foreground">سؤال</span>
+                    </div>
+                  )}
+
                   <Button variant="ghost" onClick={() => removeSection(i)} disabled={formSections.length === 1}><Trash2 className="h-4 w-4" /></Button>
                 </div>
               ))}
@@ -475,7 +530,11 @@ export function AdminExamsPage() {
                       <div className="flex flex-wrap gap-1">
                         {exam.sections.map((s) => (
                           <span key={s.id} className="badge badge-muted">
-                            {s.category_name} ({s.question_count})
+                            {s.category_name} (
+                            {s.difficulty_counts
+                              ? `${s.difficulty_counts.easy} سهل · ${s.difficulty_counts.medium} متوسط · ${s.difficulty_counts.hard} متقدم`
+                              : s.question_count}
+                            )
                           </span>
                         ))}
                       </div>

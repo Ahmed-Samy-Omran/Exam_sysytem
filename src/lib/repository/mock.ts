@@ -10,8 +10,8 @@ import type {
   QuizResult,
   QuizSettings,
 } from '@/types'
-import type { ExamRepository, ExamAttemptSummary, PublishedExamInput, QuestionFilter, QuizSetupItem, Stats } from '@/lib/repository'
-import { createQuiz, gradeQuiz } from '@/lib/quiz-engine'
+import type { ExamRepository, ExamAttemptSummary, PublishedExamInput, QuestionDifficultyCounts, QuestionFilter, QuizSetupItem, Stats } from '@/lib/repository'
+import { createQuiz, createQuizStaged, gradeQuiz } from '@/lib/quiz-engine'
 import { groupAttemptsByExam } from '@/lib/exam-activity'
 import { MOCK_CATEGORIES, MOCK_QUESTIONS, MOCK_SETTINGS } from '@/lib/mock/seedData'
 
@@ -20,6 +20,7 @@ const DEMO_ADMIN = { name: 'omar', password: 'omar369@' }
 interface MockExamSection {
   category_id: string
   question_count: number
+  difficulty_counts?: QuestionDifficultyCounts | null
 }
 
 interface MockExam {
@@ -68,7 +69,7 @@ export class MockRepository implements ExamRepository {
     const exam: MockExam = {
       id: 'exam-default',
       title: 'اختبار تدريبي شامل',
-      description: 'اختبار يغطي المحاسبة والذكاء و Excel',
+      description: 'اختبار محاسبة يتدرج من السهل إلى المتقدم',
       instructions: 'أجب على الأسئلة في الوقت المحدد. يمكنك المراجعة بعد التسليم.',
       slug: 'demo-exam',
       is_active: true,
@@ -77,9 +78,7 @@ export class MockRepository implements ExamRepository {
       allow_retakes: true,
       created_at: '2026-01-01T00:00:00Z',
       sections: [
-        { category_id: 'cat-acc', question_count: 6 },
-        { category_id: 'cat-iq', question_count: 6 },
-        { category_id: 'cat-ex', question_count: 6 },
+        { category_id: 'cat-acc', question_count: 18, difficulty_counts: { easy: 10, medium: 5, hard: 3 } },
       ],
     }
     this.exams.set(exam.slug, exam)
@@ -237,11 +236,15 @@ export class MockRepository implements ExamRepository {
     }
 
     const counts: Record<string, number> = {}
+    const plans: Partial<Record<string, QuestionDifficultyCounts>> = {}
     let timeLimit: number | null = null
     let passingScore: number | undefined
     let examTitle: string | null = null
     if (exam) {
-      for (const sec of exam.sections) counts[sec.category_id] = sec.question_count
+      for (const sec of exam.sections) {
+        counts[sec.category_id] = sec.question_count
+        if (sec.difficulty_counts) plans[sec.category_id] = sec.difficulty_counts
+      }
       timeLimit = exam.time_limit_minutes
       passingScore = exam.passing_score
       examTitle = exam.title
@@ -256,7 +259,10 @@ export class MockRepository implements ExamRepository {
       throw new Error('لا توجد أقسام نشطة')
     }
 
-    const questions = createQuiz(this.questions, counts)
+    const staged = Object.keys(plans).length > 0
+    const questions = staged
+      ? createQuizStaged(this.questions, counts, plans)
+      : createQuiz(this.questions, counts)
     const attemptId = crypto.randomUUID()
     const now = new Date().toISOString()
     const quiz: Quiz = {

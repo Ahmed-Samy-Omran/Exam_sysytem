@@ -70,6 +70,78 @@ export function createQuiz(
   return toQuizQuestions(questions, countsByCategory)
 }
 
+/** توزيع أسئلة القسم حسب الصعوبة (سهل / متوسط / متقدم) */
+export interface QuestionDifficultyPlan {
+  easy: number
+  medium: number
+  hard: number
+}
+
+/**
+ * إنشاء اختبار بسحب متدرج الصعوبة: يسحب عدداً محدداً من أسئلة المستوى السهل ثم
+ * المتوسط ثم المتقدم لكل قسم (بدون خلط كلي) بحيث تتصاعد صعوبة الأسئلة.
+ * الأقسام دون خطة صعوبة تُسحب بالسلوك المختلط المعتاد.
+ */
+export function createQuizStaged(
+  questions: readonly Question[],
+  countsByCategory: Record<string, number>,
+  difficultyPlans?: Partial<Record<string, QuestionDifficultyPlan>>,
+): QuizQuestion[] {
+  if (!questions.length) throw new Error('لا توجد أسئلة مفعّلة بعد')
+
+  const staged = Object.keys(countsByCategory).some((categoryId) => difficultyPlans?.[categoryId] != null)
+  const assembled: QuizBuildInput[] = []
+  const levels = ['easy', 'medium', 'hard'] as const
+  const LEVEL_AR_NAMES: Record<(typeof levels)[number], string> = { easy: 'السهل', medium: 'المتوسط', hard: 'المتقدم' }
+
+  for (const [categoryId, wanted] of Object.entries(countsByCategory)) {
+    const available = questions
+      .filter((x) => x.is_active !== false && x.category_id === categoryId && x.options && x.options.length >= 2)
+      .map((x) => x as Question)
+    const plan = difficultyPlans?.[categoryId]
+
+    if (plan) {
+      for (const level of levels) {
+        const req = plan[level] ?? 0
+        if (req <= 0) continue
+        const pool = available.filter((q) => q.difficulty === level)
+        if (pool.length < req) {
+          throw new Error(
+            `عدد الأسئلة في قسم ${categoryId} (المستوى ${LEVEL_AR_NAMES[level]}) غير كافٍ (المتاح ${pool.length} والمطلوب ${req})`,
+          )
+        }
+        for (const q of shuffle(pool).slice(0, req)) {
+          assembled.push({
+            question_id: q.id,
+            category_id: q.category_id,
+            question_text: q.question_text,
+            difficulty: q.difficulty,
+            options: shuffle(q.options!).map((o) => ({ option_id: o.id, option_text: o.option_text })),
+          })
+        }
+      }
+    } else {
+      if (available.length < wanted) {
+        throw new Error(
+          `عدد الأسئلة المتاحة في قسم ${categoryId} غير كافٍ (المتاح ${available.length} والمطلوب ${wanted})`,
+        )
+      }
+      for (const q of shuffle(available).slice(0, wanted)) {
+        assembled.push({
+          question_id: q.id,
+          category_id: q.category_id,
+          question_text: q.question_text,
+          difficulty: q.difficulty,
+          options: shuffle(q.options!).map((o) => ({ option_id: o.id, option_text: o.option_text })),
+        })
+      }
+    }
+  }
+
+  // التدرج: نُبقي ترتيب الصعوبة تصاعدياً (سهل ← متوسط ← متقدم)
+  return staged ? assembled : shuffle(assembled)
+}
+
 export interface GradeParams {
   questions: QuizQuestion[]
   correctByQuestion: Record<QuestionId, OptionId>

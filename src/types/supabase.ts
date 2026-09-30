@@ -182,12 +182,14 @@ export interface Database {
           exam_id: string
           category_id: string
           question_count: number
+          difficulty_counts: { easy: number; medium: number; hard: number } | null
         }
         Insert: {
           id?: string
           exam_id: string
           category_id: string
           question_count?: number
+          difficulty_counts?: { easy: number; medium: number; hard: number } | null
         }
         Update: Partial<Database['public']['Tables']['exam_sections']['Insert']>
         Relationships: []

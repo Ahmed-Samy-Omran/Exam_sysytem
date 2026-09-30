@@ -141,6 +141,43 @@ describe('MockRepository — تفاصيل المحاولات للمدير', () =
   })
 })
 
+describe('MockRepository — تدرج الصعوبة', () => {
+  it('يسحب الامتحان الافتراضي 10 سهل / 5 متوسط / 3 متقدم ويرتبها تصاعدياً', async () => {
+    const repo = new MockRepository()
+    const attempt = await repo.createCandidateAttempt('متدرج', 'g@example.com', 'exam-default')
+    const quiz = await repo.getAttempt(attempt.attempt_id)
+
+    expect(quiz.questions).toHaveLength(18)
+
+    const byLevel = (level: string) => quiz.questions.filter((q) => q.difficulty === level)
+    expect(byLevel('easy')).toHaveLength(10)
+    expect(byLevel('medium')).toHaveLength(5)
+    expect(byLevel('hard')).toHaveLength(3)
+    expect(new Set(quiz.questions.map((q) => q.difficulty))).toEqual(new Set(['easy', 'medium', 'hard']))
+
+    const levels = quiz.questions.map((q) => q.difficulty)
+    const firstNonEasy = levels.findIndex((l) => l !== 'easy')
+    const firstHard = levels.findIndex((l) => l === 'hard')
+    expect(firstNonEasy).toBeGreaterThanOrEqual(10)
+    expect(firstHard).toBeGreaterThanOrEqual(15)
+  })
+
+it('يفشل بالمحاولة المختلطة عندما يكون توزيع المستوى أقل من المتاح', async () => {
+    const repo = new MockRepository()
+    const created = await repo.createPublishedExam({
+      title: 'تدرج ناقص',
+      slug: 'graded-short',
+      description: null,
+      instructions: '',
+      passing_score: 70,
+      time_limit_minutes: null,
+      allow_retakes: true,
+      sections: [{ category_id: 'cat-acc', question_count: 30, difficulty_counts: { easy: 10, medium: 20, hard: 30 } }],
+    })
+    await expect(repo.createCandidateAttempt('متدرج', 'x@example.com', created.id)).rejects.toThrow(/غير كافٍ/)
+  })
+})
+
 describe('MockRepository — إنشاء امتحان منشور', () => {
   it('ينشئ امتحانًا كامل الأقسام ويظهر في الامتحانات العامة', async () => {
     const repo = new MockRepository()
