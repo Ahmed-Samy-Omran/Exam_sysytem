@@ -10,7 +10,7 @@ import type {
   QuizResult,
   QuizSettings,
 } from '@/types'
-import type { ExamRepository, ExamAttemptSummary, PublishedExamInput, QuestionDifficultyCounts, QuestionFilter, QuizSetupItem, Stats } from '@/lib/repository'
+import type { ExamRepository, ExamAttemptSummary, PublicExamInfo, PublishedExamInput, QuestionDifficultyCounts, QuestionFilter, QuizSetupItem, Stats } from '@/lib/repository'
 import { createQuiz, createQuizStaged, gradeQuiz } from '@/lib/quiz-engine'
 import { groupAttemptsByExam } from '@/lib/exam-activity'
 import { MOCK_CATEGORIES, MOCK_QUESTIONS, MOCK_SETTINGS } from '@/lib/mock/seedData'
@@ -23,16 +23,9 @@ interface MockExamSection {
   difficulty_counts?: QuestionDifficultyCounts | null
 }
 
-interface MockExam {
-  id: string
-  title: string
-  description: string | null
-  instructions: string
+interface MockExam extends PublicExamInfo {
   slug: string
-  is_active: boolean
-  passing_score: number
-  time_limit_minutes: number | null
-  allow_retakes: boolean
+  show_answers: boolean
   sections: MockExamSection[]
   created_at?: string
 }
@@ -76,6 +69,7 @@ export class MockRepository implements ExamRepository {
       passing_score: 70,
       time_limit_minutes: null,
       allow_retakes: true,
+      show_answers: true,
       created_at: '2026-01-01T00:00:00Z',
       sections: [
         { category_id: 'cat-acc', question_count: 18, difficulty_counts: { easy: 10, medium: 5, hard: 3 } },
@@ -154,12 +148,14 @@ export class MockRepository implements ExamRepository {
     if (!att) throw new Error('المحاولة غير موجودة')
     if (att.status === 'submitted') throw new Error('تم تسليم هذه المحاولة من قبل')
     att.answers = answers
+    const exam = att.examId ? this.examsById.get(att.examId) : undefined
     const result = gradeQuiz({
       questions: att.quiz.questions,
       correctByQuestion: att.correctByQuestion,
       answerMap: answers,
       passingScore,
       explanations: att.explanations,
+      showAnswers: exam?.show_answers !== false,
     })
     result.attempt_id = attemptId
     const categoryNameById = new Map(this.categories.map((c) => [c.id, c.name]))
@@ -170,6 +166,9 @@ export class MockRepository implements ExamRepository {
         category_name: item.question.category_name ?? categoryNameById.get(item.question.category_id) ?? item.question.category_name,
       },
     }))
+    if (exam?.show_answers === false) {
+      result.review = []
+    }
     att.status = 'submitted'
     att.score = result.score_percent
     att.submittedAt = new Date().toISOString()
@@ -295,16 +294,7 @@ export class MockRepository implements ExamRepository {
     }
   }
 
-  async getExamBySlug(slug: string): Promise<{
-    id: string
-    title: string
-    description: string | null
-    instructions: string
-    is_active: boolean
-    passing_score: number
-    time_limit_minutes: number | null
-    allow_retakes: boolean
-  } | null> {
+  async getExamBySlug(slug: string): Promise<PublicExamInfo | null> {
     const exam = this.exams.get(slug)
     if (!exam) return null
     return {
@@ -316,19 +306,11 @@ export class MockRepository implements ExamRepository {
       passing_score: exam.passing_score,
       time_limit_minutes: exam.time_limit_minutes,
       allow_retakes: exam.allow_retakes,
+      show_answers: exam.show_answers ?? true,
     }
   }
 
-  async getExamById(id: string): Promise<{
-    id: string
-    title: string
-    description: string | null
-    instructions: string
-    is_active: boolean
-    passing_score: number
-    time_limit_minutes: number | null
-    allow_retakes: boolean
-  } | null> {
+  async getExamById(id: string): Promise<PublicExamInfo | null> {
     const exam = this.examsById.get(id)
     if (!exam) return null
     return {
@@ -340,6 +322,7 @@ export class MockRepository implements ExamRepository {
       passing_score: exam.passing_score,
       time_limit_minutes: exam.time_limit_minutes,
       allow_retakes: exam.allow_retakes,
+      show_answers: exam.show_answers ?? true,
     }
   }
 
@@ -362,6 +345,7 @@ export class MockRepository implements ExamRepository {
       passing_score: input.passing_score,
       time_limit_minutes: input.time_limit_minutes,
       allow_retakes: input.allow_retakes,
+      show_answers: input.show_answers,
       created_at: new Date().toISOString(),
       sections: input.sections.map((s) => ({ ...s, id: crypto.randomUUID() })),
     }

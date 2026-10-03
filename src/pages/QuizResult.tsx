@@ -101,7 +101,9 @@ export function QuizResultPage() {
       </div>
 
       <h3 className="mt-10 mb-4 text-lg font-extrabold">مراجعة الإجابات</h3>
-      {result.review.length === 0 ? (
+      {result.show_answers === false ? (
+        <EmptyState title="لا تتوفر مراجعة الإجابات لهذا الامتحان" hint="عُرضت النتيجة فقط بناءً على إعدادات الامتحان." />
+      ) : result.review.length === 0 ? (
         <EmptyState title="لا توجد أسئلة للمراجعة" />
       ) : (
         <div className="space-y-4">

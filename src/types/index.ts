@@ -58,6 +58,11 @@ export interface QuizResult {
   score_percent: number
   passed: boolean
   by_category: Record<string, CategoryResult>
+  /** هل يعرض الامتحان مراجعة الإجابات؟ إعداد المدير لكل امتحان — يفرضه الخادم */
+  show_answers: boolean
+  /** اسم كل قسم id ← اسم لعرض "النتيجة حسب القسم" حتى بلا مراجعة */
+  category_names?: Record<string, string>
+  /** فارغ تمامًا إن كان show_answers = false — لا يغادر المتصفح أي إجابة صحيحة */
   review: QuestionReview[]
 }
 

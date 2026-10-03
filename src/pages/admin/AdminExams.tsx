@@ -19,6 +19,7 @@ interface ExamRow {
   passing_score: number
   time_limit_minutes: number | null
   allow_retakes: boolean
+  show_answers: boolean
   created_at: string
 }
 
@@ -52,7 +53,7 @@ async function getExamsAdmin(repo: any): Promise<
   return [...repo.exams.values()].map((e: any) => ({
     id: e.id, title: e.title, description: e.description, instructions: e.instructions,
     slug: e.slug, is_active: e.is_active, passing_score: e.passing_score,
-    time_limit_minutes: e.time_limit_minutes, allow_retakes: e.allow_retakes, created_at: e.created_at,
+    time_limit_minutes: e.time_limit_minutes, allow_retakes: e.allow_retakes, show_answers: e.show_answers ?? true, created_at: e.created_at,
     sections: e.sections.map((s: any) => ({ id: s.id, category_id: s.category_id, question_count: s.question_count, difficulty_counts: s.difficulty_counts ?? null })),
   }))
 }
@@ -72,23 +73,24 @@ async function getExamByIdAdmin(repo: any, id: string): Promise<
   }
   const e = repo.examsById.get(id)
   if (!e) throw new Error('الامتحان غير موجود')
-  return {
-    id: e.id, title: e.title, description: e.description, instructions: e.instructions,
-    slug: e.slug, is_active: e.is_active, passing_score: e.passing_score,
-    time_limit_minutes: e.time_limit_minutes, allow_retakes: e.allow_retakes, created_at: e.created_at,
-    sections: e.sections.map((s: any) => ({ id: s.id, category_id: s.category_id, question_count: s.question_count, difficulty_counts: s.difficulty_counts ?? null })),
-  }
+    return {
+      id: e.id, title: e.title, description: e.description, instructions: e.instructions,
+      slug: e.slug, is_active: e.is_active, passing_score: e.passing_score,
+      time_limit_minutes: e.time_limit_minutes, allow_retakes: e.allow_retakes, show_answers: e.show_answers ?? true, created_at: e.created_at,
+      sections: e.sections.map((s: any) => ({ id: s.id, category_id: s.category_id, question_count: s.question_count, difficulty_counts: s.difficulty_counts ?? null })),
+    }
 }
 
 async function createExam(repo: any, data: {
   title: string; slug: string; description: string | null; instructions: string;
   passing_score: number; time_limit_minutes: number | null; allow_retakes: boolean;
+  show_answers: boolean;
   sections: { category_id: string; question_count: number }[]
 }) {
   if (repo.sb) {
     const { data: exam, error: examErr } = await repo.sb
       .from('exams')
-      .insert({ title: data.title, slug: data.slug, description: data.description, instructions: data.instructions, passing_score: data.passing_score, time_limit_minutes: data.time_limit_minutes, allow_retakes: data.allow_retakes, is_active: true })
+      .insert({ title: data.title, slug: data.slug, description: data.description, instructions: data.instructions, passing_score: data.passing_score, time_limit_minutes: data.time_limit_minutes, allow_retakes: data.allow_retakes, show_answers: data.show_answers ?? true, is_active: true })
       .select('*')
       .single()
     if (examErr) throw examErr
@@ -104,7 +106,9 @@ async function createExam(repo: any, data: {
   const exam: any = {
     id: crypto.randomUUID(), title: data.title, description: data.description, instructions: data.instructions,
     slug: data.slug, is_active: true, passing_score: data.passing_score,
-    time_limit_minutes: data.time_limit_minutes, allow_retakes: data.allow_retakes,
+    time_limit_minutes: data.time_limit_minutes,
+    allow_retakes: data.allow_retakes,
+    show_answers: data.show_answers ?? true,
     created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
     sections: data.sections.map((s) => ({ ...s, id: crypto.randomUUID() })),
   }
@@ -122,8 +126,9 @@ async function updateExam(repo: any, id: string, data: any) {
     if (data.instructions !== undefined) fields.instructions = data.instructions
     if (data.passing_score !== undefined) fields.passing_score = data.passing_score
     if (data.time_limit_minutes !== undefined) fields.time_limit_minutes = data.time_limit_minutes
-    if (data.allow_retakes !== undefined) fields.allow_retakes = data.allow_retakes
-    if (data.is_active !== undefined) fields.is_active = data.is_active
+      if (data.allow_retakes !== undefined) fields.allow_retakes = data.allow_retakes
+      if (data.is_active !== undefined) fields.is_active = data.is_active
+      if (data.show_answers !== undefined) fields.show_answers = data.show_answers
     if (Object.keys(fields).length) {
       const { error } = await repo.sb.from('exams').update(fields).eq('id', id)
       if (error) throw error
@@ -149,8 +154,9 @@ async function updateExam(repo: any, id: string, data: any) {
     if (data.instructions !== undefined) exam.instructions = data.instructions
     if (data.passing_score !== undefined) exam.passing_score = data.passing_score
     if (data.time_limit_minutes !== undefined) exam.time_limit_minutes = data.time_limit_minutes
-    if (data.allow_retakes !== undefined) exam.allow_retakes = data.allow_retakes
-    if (data.is_active !== undefined) exam.is_active = data.is_active
+      if (data.allow_retakes !== undefined) exam.allow_retakes = data.allow_retakes
+      if (data.is_active !== undefined) exam.is_active = data.is_active
+      if (data.show_answers !== undefined) exam.show_answers = data.show_answers
     exam.updated_at = new Date().toISOString()
     if (data.sections !== undefined) exam.sections = data.sections.map((s: any) => ({ ...s, id: crypto.randomUUID() }))
   }
@@ -189,6 +195,7 @@ export function AdminExamsPage() {
   const [formPassingScore, setFormPassingScore] = useState('70')
   const [formTimeLimit, setFormTimeLimit] = useState('')
   const [formAllowRetakes, setFormAllowRetakes] = useState(true)
+  const [formShowAnswers, setFormShowAnswers] = useState(true)
   const [formSections, setFormSections] = useState<{ category_id: string; question_count: string; graded: boolean; easy: string; medium: string; hard: string }[]>([])
 
   const load = useCallback(async () => {
@@ -227,6 +234,7 @@ export function AdminExamsPage() {
           setFormPassingScore(String(exam.passing_score))
           setFormTimeLimit(exam.time_limit_minutes?.toString() ?? '')
           setFormAllowRetakes(exam.allow_retakes)
+          setFormShowAnswers(exam.show_answers ?? true)
           setFormSections(
             exam.sections.length
               ? exam.sections.map((s: any) => ({
@@ -251,6 +259,7 @@ export function AdminExamsPage() {
         setFormPassingScore('70')
         setFormTimeLimit('')
         setFormAllowRetakes(true)
+        setFormShowAnswers(true)
         setFormSections([{ category_id: categories[0]?.id ?? '', question_count: '5', graded: false, easy: '0', medium: '0', hard: '0' }])
         setSuccess(null)
         setError(null)
@@ -303,6 +312,7 @@ export function AdminExamsPage() {
         passing_score: Math.min(100, Math.max(0, Number(formPassingScore) || 70)),
         time_limit_minutes: formTimeLimit.trim() === '' ? null : Math.max(1, Number(formTimeLimit) || 1),
         allow_retakes: formAllowRetakes,
+        show_answers: formShowAnswers,
         sections: formSections.map((s) => {
           const classic = {
             category_id: s.category_id,
@@ -439,6 +449,10 @@ export function AdminExamsPage() {
             <div className="flex items-center gap-2 pt-5">
               <input type="checkbox" id="retakes" checked={formAllowRetakes} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormAllowRetakes(e.target.checked)} className="h-4 w-4 accent-primary rounded border-border" />
               <label htmlFor="retakes" className="text-sm font-bold">السماح بإعادة الاختبار</label>
+            </div>
+            <div className="flex items-center gap-2 pt-5">
+              <input type="checkbox" id="showAnswers" checked={formShowAnswers} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormShowAnswers(e.target.checked)} className="h-4 w-4 accent-primary rounded border-border" />
+              <label htmlFor="showAnswers" className="text-sm font-bold">عرض مراجعة الإجابات بعد التسليم</label>
             </div>
           </div>
 

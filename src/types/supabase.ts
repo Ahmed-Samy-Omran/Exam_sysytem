@@ -159,6 +159,7 @@ export interface Database {
           passing_score: number
           time_limit_minutes: number | null
           allow_retakes: boolean
+          show_answers: boolean
           created_at: string
           updated_at: string
         }
@@ -172,6 +173,7 @@ export interface Database {
           passing_score?: number
           time_limit_minutes?: number | null
           allow_retakes?: boolean
+          show_answers?: boolean
         }
         Update: Partial<Database['public']['Tables']['exams']['Insert']>
         Relationships: []

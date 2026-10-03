@@ -6,7 +6,7 @@ export function AboutPage() {
       <h1 className="text-3xl font-extrabold">عن المنصة</h1>
       <p className="mt-4 leading-relaxed text-muted-foreground">
         منصة تدريبية تسمح بأداء اختبار عشوائي من ثلاثة أقسام: المحاسبة، الذكاء، و Excel.
-        بعد التسليم تحصل على النسبة المئوية ومراجعة مفصلة للإجابات الخاطئة مع التصحيح.
+        بعد التسليم تحصل على النسبة المئوية، ويمكن للمدير اختيار تفعيل مراجعة الإجابات والتصحيح لكل سؤال.
       </p>
       <p className="mt-3 leading-relaxed text-muted-foreground">
         هذه المنصة مناسبة للتدريب والمذاكرة ولا تُعدّ نظام امتحانات رسمي عالي الأمانة.

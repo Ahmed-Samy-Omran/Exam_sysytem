@@ -5,6 +5,7 @@ import type {
   Question,
   QuestionDraftOption,
   QuestionId,
+  QuestionReview,
   QuizQuestion,
   QuizResult,
 } from '@/types'
@@ -148,18 +149,22 @@ export interface GradeParams {
   answerMap: AnswerMap
   passingScore: number
   explanations?: Record<QuestionId, string>
+  /** إعداد المدير: عند false لا تُبنى المراجعة إطلاقًا (النتيجة فقط) */
+  showAnswers?: boolean
 }
 
 export function gradeQuiz(params: GradeParams): QuizResult {
   const { questions, correctByQuestion, answerMap, passingScore, explanations } = params
+  const showAnswers = params.showAnswers !== false
   const total = questions.length
 
   const byCategory: Record<string, CategoryResult> = {}
+  const review: QuestionReview[] = []
   let correct = 0
   let wrong = 0
   let unanswered = 0
 
-  const review = questions.map((question) => {
+  for (const question of questions) {
     const chosen = answerMap[question.question_id] ?? null
     const chosenIsValid = chosen !== null && question.options.some((o) => o.option_id === chosen)
     const correctOptionId = correctByQuestion[question.question_id]
@@ -173,15 +178,18 @@ export function gradeQuiz(params: GradeParams): QuizResult {
     cat.total += 1
     if (isCorrect) cat.correct += 1
 
-    return {
-      question,
-      chosen_option_id: chosenIsValid ? chosen : null,
-      correct_option_id: correctOptionId,
-      explanation: explanations?.[question.question_id] ?? '',
-      is_correct: isCorrect,
-      answered: chosenIsValid,
+    // إعداد المدير: المراجعة لا تُبنى أصلًا، فلا تُحفظ الإجابة الصحيحة في النتيجة
+    if (showAnswers) {
+      review.push({
+        question,
+        chosen_option_id: chosenIsValid ? chosen : null,
+        correct_option_id: correctOptionId,
+        explanation: explanations?.[question.question_id] ?? '',
+        is_correct: isCorrect,
+        answered: chosenIsValid,
+      })
     }
-  })
+  }
 
   for (const cat of Object.values(byCategory)) {
     cat.percent = cat.total ? Number(((cat.correct / cat.total) * 100).toFixed(2)) : 0
@@ -198,6 +206,7 @@ export function gradeQuiz(params: GradeParams): QuizResult {
     score_percent: scorePercent,
     passed: scorePercent >= passingScore,
     by_category: byCategory,
+    show_answers: showAnswers,
     review,
   }
 }

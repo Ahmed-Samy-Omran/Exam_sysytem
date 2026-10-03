@@ -38,7 +38,22 @@ export interface PublishedExamInput {
   passing_score: number
   time_limit_minutes: number | null
   allow_retakes: boolean
+  /** عرض مراجعة الإجابات بعد التسليم (false = النتيجة فقط) */
+  show_answers: boolean
   sections: PublishedExamSection[]
+}
+
+/** إعدادات الامتحان كما يراها المتقدم قبل البدء */
+export interface PublicExamInfo {
+  id: string
+  title: string
+  description: string | null
+  instructions: string
+  is_active: boolean
+  passing_score: number
+  time_limit_minutes: number | null
+  allow_retakes: boolean
+  show_answers: boolean
 }
 
 export interface Stats {
@@ -102,8 +117,8 @@ export interface ExamRepository {
 
   // ---- Candidate entry ----
   createCandidateAttempt(name: string, email?: string, examId?: string): Promise<{ attempt_id: string; candidate_name: string; candidate_email: string; status: string; started_at: string }>
-  getExamBySlug(slug: string): Promise<{ id: string; title: string; description: string | null; instructions: string; is_active: boolean; passing_score: number; time_limit_minutes: number | null; allow_retakes: boolean } | null>
-  getExamById(id: string): Promise<{ id: string; title: string; description: string | null; instructions: string; is_active: boolean; passing_score: number; time_limit_minutes: number | null; allow_retakes: boolean } | null>
+  getExamBySlug(slug: string): Promise<PublicExamInfo | null>
+  getExamById(id: string): Promise<PublicExamInfo | null>
   getActivePublicExams(): Promise<{ id: string; title: string; slug: string; description: string | null }[]>
   createPublishedExam(input: PublishedExamInput): Promise<{ id: string; title: string; slug: string }>
 }

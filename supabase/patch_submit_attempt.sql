@@ -3,6 +3,11 @@
 -- quiz_attempts columns of the same name inside `UPDATE public.quiz_attempts`.
 -- Fix: renamed locals to v_correct_count / v_wrong_count, recurring everywhere.
 -- Run this in the Supabase SQL Editor (or re-run supabase/apply_all.sql which now includes it).
+--
+-- DEPRECATED: superseded by supabase/migrations/0010_show_answers.sql.
+-- This script knows nothing about exams.show_answers and would return the
+-- answer key to candidates for exams where the admin disabled the review.
+-- Run 0010 (not this file) on any project that has it.
 
 create or replace function public.submit_attempt(
   a_id uuid,

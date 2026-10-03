@@ -15,6 +15,7 @@ import type { Database } from '@/types/supabase'
 import type {
   ExamRepository,
   ExamAttemptSummary,
+  PublicExamInfo,
   PublishedExamInput,
   QuestionFilter,
   QuizSetupItem,
@@ -60,21 +61,16 @@ interface SubmitResponse {
   score_percent: number
   passed: boolean
   passing_score: number
+  show_answers?: boolean
+  category_names?: Record<string, string>
   by_category: Record<string, { correct: number; total: number }>
   review: ReviewItem[]
 }
 
-interface ExamRow {
-  id: string
-  title: string
-  description: string | null
-  instructions: string
-  slug: string
-  is_active: boolean
-  passing_score: number
-  time_limit_minutes: number | null
-  allow_retakes: boolean
-}
+const EXAM_PUBLIC_COLUMNS =
+  'id, title, description, instructions, slug, is_active, passing_score, time_limit_minutes, allow_retakes, show_answers'
+
+type ExamRow = PublicExamInfo & { slug: string }
 
 export class SupabaseRepository implements ExamRepository {
   private readonly sb: SupabaseClient<Database>
@@ -146,6 +142,8 @@ export class SupabaseRepository implements ExamRepository {
         percent: v.total ? Number(((v.correct / v.total) * 100).toFixed(2)) : 0,
       }
     }
+    // الخادم هو المرجع: إن أخفى الامتحان المراجعة فلا تصل أي إجابة صحيحة أصلاً
+    const showAnswers = r.show_answers !== false
     return {
       attempt_id: r.attempt_id,
       total: r.total,
@@ -155,21 +153,25 @@ export class SupabaseRepository implements ExamRepository {
       score_percent: r.score_percent,
       passed: r.passed,
       by_category: byCategory,
-      review: (r.review ?? []).map((item) => ({
-        question: {
-          question_id: item.question_id,
-          category_id: item.category_id,
-          question_text: item.question_text,
-          difficulty: 'medium' as const,
-          options: Array.isArray(item.options) ? item.options : [],
-          category_name: item.category_name,
-        },
-        chosen_option_id: item.chosen_option_id,
-        correct_option_id: item.correct_option_id,
-        explanation: item.explanation ?? '',
-        is_correct: item.is_correct,
-        answered: item.answered,
-      })),
+      show_answers: showAnswers,
+      category_names: r.category_names ?? {},
+      review: !showAnswers
+        ? []
+        : (r.review ?? []).map((item) => ({
+            question: {
+              question_id: item.question_id,
+              category_id: item.category_id,
+              question_text: item.question_text,
+              difficulty: 'medium' as const,
+              options: Array.isArray(item.options) ? item.options : [],
+              category_name: item.category_name,
+            },
+            chosen_option_id: item.chosen_option_id,
+            correct_option_id: item.correct_option_id,
+            explanation: item.explanation ?? '',
+            is_correct: item.is_correct,
+            answered: item.answered,
+          })),
     }
   }
 
@@ -225,21 +227,21 @@ export class SupabaseRepository implements ExamRepository {
   async getExamBySlug(slug: string): Promise<ExamRow | null> {
     const { data, error } = await this.sb
       .from('exams')
-      .select('id, title, description, instructions, slug, is_active, passing_score, time_limit_minutes, allow_retakes')
+      .select(EXAM_PUBLIC_COLUMNS)
       .eq('slug', slug)
       .maybeSingle()
     if (error) throw error
-    return (data ?? null) as ExamRow | null
+    return (data as unknown as ExamRow | null) ?? null
   }
 
   async getExamById(id: string): Promise<ExamRow | null> {
     const { data, error } = await this.sb
       .from('exams')
-      .select('id, title, description, instructions, slug, is_active, passing_score, time_limit_minutes, allow_retakes')
+      .select(EXAM_PUBLIC_COLUMNS)
       .eq('id', id)
       .maybeSingle()
     if (error) throw error
-    return (data ?? null) as ExamRow | null
+    return (data as unknown as ExamRow | null) ?? null
   }
 
   async getActivePublicExams(): Promise<{ id: string; title: string; slug: string; description: string | null }[]> {
@@ -268,6 +270,7 @@ export class SupabaseRepository implements ExamRepository {
         passing_score: input.passing_score,
         time_limit_minutes: input.time_limit_minutes,
         allow_retakes: input.allow_retakes,
+        show_answers: input.show_answers,
         is_active: true,
       })
       .select('*')
