@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams, useParams } from 'react-router-dom'
 import { ClipboardList, Loader2, Mail, User, AlertCircle, Check, Copy } from 'lucide-react'
 import { Badge, Button, Card, Field, PageHeader, Spinner } from '@/components/ui'
+import { BrandLogo } from '@/components/BrandLogo'
 import { getRepository } from '@/lib/repository/factory'
 
 const STORAGE_KEY = 'active_exam_attempt'
@@ -190,6 +191,10 @@ export function ExamStartPage() {
 
   return (
     <main className="mx-auto max-w-xl px-4 py-8">
+      <div className="mb-6 flex justify-center">
+        <BrandLogo variant="stacked" height={104} />
+      </div>
+
       <PageHeader title={exam.title} subtitle={exam.description ?? ''} />
 
       {exam.instructions ? (

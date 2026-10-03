@@ -16,6 +16,7 @@ import { AdminAttemptDetailsPage } from '@/pages/admin/AdminAttemptDetails'
 import { AdminExamAttemptsPage } from '@/pages/admin/AdminExamAttempts'
 import { NotFoundPage } from '@/pages/NotFound'
 import { ModeBanner } from '@/components/ModeBanner'
+import { PublicLayout } from '@/components/PublicLayout'
 import { ExamStartPage } from '@/pages/ExamStartPage'
 
 const AboutPage = lazy(() => import('@/pages/About').then((m) => ({ default: m.AboutPage })))
@@ -26,10 +27,13 @@ export default function App() {
       <ModeBanner />
       <Suspense fallback={null}>
         <Routes>
-          <Route path="/" element={<HomePage />} />
+          <Route element={<PublicLayout />}>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/quiz/:attemptId/result" element={<QuizResultPage />} />
+            <Route path="/exam/start" element={<ExamStartPage />} />
+          </Route>
           <Route path="/quiz/:attemptId" element={<QuizRunnerPage />} />
-          <Route path="/quiz/:attemptId/result" element={<QuizResultPage />} />
-          <Route path="/about" element={<AboutPage />} />
           <Route path="/admin/login" element={<AdminLoginPage />} />
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboardPage />} />
@@ -43,7 +47,6 @@ export default function App() {
             <Route path="exams/:examId/attempts" element={<AdminExamAttemptsPage />} />
             <Route path="attempts/:attemptId" element={<AdminAttemptDetailsPage />} />
           </Route>
-          <Route path="/exam/start" element={<ExamStartPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Suspense>

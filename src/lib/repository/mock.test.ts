@@ -172,6 +172,7 @@ it('يفشل بالمحاولة المختلطة عندما يكون توزيع 
       passing_score: 70,
       time_limit_minutes: null,
       allow_retakes: true,
+      show_answers: true,
       sections: [{ category_id: 'cat-acc', question_count: 30, difficulty_counts: { easy: 10, medium: 20, hard: 30 } }],
     })
     await expect(repo.createCandidateAttempt('متدرج', 'x@example.com', created.id)).rejects.toThrow(/غير كافٍ/)
@@ -191,6 +192,7 @@ describe('MockRepository — إنشاء امتحان منشور', () => {
       passing_score: 70,
       time_limit_minutes: 30,
       allow_retakes: true,
+      show_answers: true,
       sections: cats.map((c) => ({ category_id: c.id, question_count: 3 })),
     })
 
@@ -211,6 +213,7 @@ describe('MockRepository — إنشاء امتحان منشور', () => {
       passing_score: 70,
       time_limit_minutes: null,
       allow_retakes: true,
+      show_answers: true,
       sections: [],
     })
     await expect(
@@ -222,6 +225,7 @@ describe('MockRepository — إنشاء امتحان منشور', () => {
         passing_score: 70,
         time_limit_minutes: null,
         allow_retakes: true,
+        show_answers: true,
         sections: [],
       }),
     ).rejects.toThrow(/بالفعل/)

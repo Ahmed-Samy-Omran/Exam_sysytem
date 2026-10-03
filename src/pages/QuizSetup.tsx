@@ -72,6 +72,7 @@ export function QuizSetupPage() {
         passing_score: Math.max(0, ...selected.map((c) => settings[c.slug]?.passing_score ?? 70)),
         time_limit_minutes: timeoutValue,
         allow_retakes: true,
+        show_answers: true,
         sections: selected.map((c) => ({ category_id: c.id, question_count: counts[c.slug] })),
       })
       setCopied(false)

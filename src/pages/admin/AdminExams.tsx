@@ -437,7 +437,7 @@ export function AdminExamsPage() {
             <textarea className="input min-h-[60px]" value={formInstructions} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormInstructions(e.target.value)} placeholder="مثال: أجب على جميع الأسئلة. لا يمكن التراجع بعد التسليم." />
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="label">درجة النجاح %</label>
               <input type="number" min={0} max={100} className="input" value={formPassingScore} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormPassingScore(e.target.value)} />
@@ -446,13 +446,19 @@ export function AdminExamsPage() {
               <label className="label">المؤقت (دقائق، فارغ = بلا حد)</label>
               <input type="number" min={1} max={180} className="input" value={formTimeLimit} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormTimeLimit(e.target.value)} placeholder="مثال: 30" />
             </div>
-            <div className="flex items-center gap-2 pt-5">
-              <input type="checkbox" id="retakes" checked={formAllowRetakes} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormAllowRetakes(e.target.checked)} className="h-4 w-4 accent-primary rounded border-border" />
-              <label htmlFor="retakes" className="text-sm font-bold">السماح بإعادة الاختبار</label>
+          </div>
+
+          {/* خيارات مستقلة عن الحقول الرقمية: صف كامل بعرض الصفحة حتى لا
+              ينكسر العنوان العربي الطويل داخل عمود بثلاثة، وحتى لا نحتاج
+              إزاحة `pt-*` هشّة لمحاذاة المربعات مع ارتفاع `.input`. */}
+          <div className="flex flex-col gap-3 rounded-lg border border-border bg-muted/30 p-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-6">
+            <div className="flex items-center gap-2">
+              <input type="checkbox" id="retakes" checked={formAllowRetakes} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormAllowRetakes(e.target.checked)} className="h-4 w-4 shrink-0 accent-primary" />
+              <label htmlFor="retakes" className="cursor-pointer text-sm font-bold">السماح بإعادة الاختبار</label>
             </div>
-            <div className="flex items-center gap-2 pt-5">
-              <input type="checkbox" id="showAnswers" checked={formShowAnswers} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormShowAnswers(e.target.checked)} className="h-4 w-4 accent-primary rounded border-border" />
-              <label htmlFor="showAnswers" className="text-sm font-bold">عرض مراجعة الإجابات بعد التسليم</label>
+            <div className="flex items-center gap-2">
+              <input type="checkbox" id="showAnswers" checked={formShowAnswers} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormShowAnswers(e.target.checked)} className="h-4 w-4 shrink-0 accent-primary" />
+              <label htmlFor="showAnswers" className="cursor-pointer text-sm font-bold">عرض مراجعة الإجابات بعد التسليم</label>
             </div>
           </div>
 

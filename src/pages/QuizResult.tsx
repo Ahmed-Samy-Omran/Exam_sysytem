@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { CheckCircle2, Home, RotateCcw, XCircle } from 'lucide-react'
 import { Badge, Card, EmptyState, PageHeader, Spinner } from '@/components/ui'
+import { BrandLogo } from '@/components/BrandLogo'
 import { categoryBadgeClass, formatPercent } from '@/lib/format'
 import type { QuizResult } from '@/types'
 
@@ -38,6 +39,10 @@ export function QuizResultPage() {
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8">
+      <div className="mb-6 flex justify-center">
+        <BrandLogo variant="stacked" height={120} />
+      </div>
+
       <PageHeader title="نتيجة الاختبار" />
 
       <Card className={`p-8 text-center ${passed ? '' : 'border-destructive/40'}`}>
