@@ -72,6 +72,40 @@ const EXAM_PUBLIC_COLUMNS =
 
 type ExamRow = PublicExamInfo & { slug: string }
 
+interface DbErrorLike {
+  message?: string | null
+  code?: string | null
+  details?: string | null
+  hint?: string | null
+}
+
+/**
+ * PostgREST يرجع الأخطاء ككائنات عادية (`PostgrestError`) وليست
+ * `instanceof Error`. أي `catch` في الواجهة يفحص `instanceof Error` يتجاهل
+ * الرسالة ويعرض نصًا عامًا مثل «تعذر إنشاء الامتحان»، فيخفي سببًا حقيقيًا
+ * مثل عمود ناقص في القاعدة. نحوّلها إلى `Error` حقيقي مرة واحدة عند الحد
+ * الفاصل ليعمل فحص `instanceof Error` في كل الشاشات.
+ */
+export function toError(error: unknown, context?: string): Error {
+  if (error instanceof Error) return error
+
+  let text: string
+  if (error && typeof error === 'object') {
+    const e = error as DbErrorLike
+    const code = e.code ? ` (${e.code})` : ''
+    const message = e.message?.trim() || e.details?.trim() || e.hint?.trim()
+    text = message ? `${message}${code}` : 'خطأ غير معروف في قاعدة البيانات'
+  } else {
+    text = String(error ?? 'خطأ غير معروف')
+  }
+
+  const wrapped = new Error(context ? `${context}: ${text}` : text)
+  if (error && typeof error === 'object' && (error as DbErrorLike).code) {
+    ;(wrapped as Error & { code?: string }).code = (error as DbErrorLike).code as string
+  }
+  return wrapped
+}
+
 export class SupabaseRepository implements ExamRepository {
   private readonly sb: SupabaseClient<Database>
 
@@ -83,7 +117,7 @@ export class SupabaseRepository implements ExamRepository {
 
   async getPublicCategories(): Promise<Category[]> {
     const { data, error } = await this.sb.from('public_categories').select('*').order('name')
-    if (error) throw error
+    if (error) throw toError(error)
     return (data ?? []).map((c) => ({
       ...(c as unknown as Category),
       accent_color: c.accent_color || '#0D9488',
@@ -95,7 +129,7 @@ export class SupabaseRepository implements ExamRepository {
   async getSettingsBySlug(): Promise<Record<string, QuizSettings>> {
     const cats = await this.getPublicCategories()
     const { data, error } = await this.sb.from('quiz_settings').select('*')
-    if (error) throw error
+    if (error) throw toError(error)
     const byId = new Map(cats.map((c) => [c.id, c]))
     const out: Record<string, QuizSettings> = {}
     for (const s of data ?? []) {
@@ -111,14 +145,14 @@ export class SupabaseRepository implements ExamRepository {
       counts: setup.map((s) => s.count),
       time_limit_min: timeLimitMin,
     })
-    if (error) throw error
+    if (error) throw toError(error)
     const parsed = data as unknown as AttemptResponse
     return this.toQuiz(parsed)
   }
 
   async getAttempt(attemptId: string): Promise<Quiz> {
     const { data, error } = await this.sb.rpc('get_attempt', { a_id: attemptId })
-    if (error) throw error
+    if (error) throw toError(error)
     return this.toQuiz(data as unknown as AttemptResponse)
   }
 
@@ -132,7 +166,7 @@ export class SupabaseRepository implements ExamRepository {
       p_answers: payload,
       passing_score: passingScore,
     })
-    if (error) throw error
+    if (error) throw toError(error)
     const r = data as unknown as SubmitResponse
     const byCategory: QuizResult['by_category'] = {}
     for (const [key, v] of Object.entries(r.by_category ?? {})) {
@@ -207,7 +241,7 @@ export class SupabaseRepository implements ExamRepository {
       p_email: email?.trim() || null,
       p_exam_id: examId ?? null,
     })
-    if (error) throw error
+    if (error) throw toError(error)
     const row = (data ?? {}) as {
       attempt_id?: string
       candidate_name?: string
@@ -230,7 +264,7 @@ export class SupabaseRepository implements ExamRepository {
       .select(EXAM_PUBLIC_COLUMNS)
       .eq('slug', slug)
       .maybeSingle()
-    if (error) throw error
+    if (error) throw toError(error)
     return (data as unknown as ExamRow | null) ?? null
   }
 
@@ -240,7 +274,7 @@ export class SupabaseRepository implements ExamRepository {
       .select(EXAM_PUBLIC_COLUMNS)
       .eq('id', id)
       .maybeSingle()
-    if (error) throw error
+    if (error) throw toError(error)
     return (data as unknown as ExamRow | null) ?? null
   }
 
@@ -250,7 +284,7 @@ export class SupabaseRepository implements ExamRepository {
       .select('id, title, slug, description')
       .eq('is_active', true)
       .order('created_at', { ascending: true })
-    if (error) throw error
+    if (error) throw toError(error)
     return (data ?? []).map((r) => ({
       id: r.id,
       title: r.title,
@@ -275,12 +309,12 @@ export class SupabaseRepository implements ExamRepository {
       })
       .select('*')
       .single()
-    if (examErr) throw examErr
+    if (examErr) throw toError(examErr)
     if (input.sections.length) {
       const { error: secErr } = await this.sb
         .from('exam_sections')
         .insert(input.sections.map((s) => ({ exam_id: exam.id, ...s })))
-      if (secErr) throw secErr
+      if (secErr) throw toError(secErr)
     }
     return { id: exam.id, title: exam.title, slug: exam.slug }
   }
@@ -305,7 +339,7 @@ export class SupabaseRepository implements ExamRepository {
 
   async listCategoriesAdmin(): Promise<Category[]> {
     const { data, error } = await this.sb.from('categories').select('*').order('name')
-    if (error) throw error
+    if (error) throw toError(error)
     return (data ?? []) as Category[]
   }
 
@@ -324,7 +358,7 @@ export class SupabaseRepository implements ExamRepository {
         .eq('id', cat.id)
         .select('*')
         .single()
-      if (error) throw error
+      if (error) throw toError(error)
       return data as Category
     }
     const { data, error } = await this.sb
@@ -332,7 +366,7 @@ export class SupabaseRepository implements ExamRepository {
       .insert({ name: cat.name, slug: cat.slug, description: cat.description, accent_color: cat.accent_color, is_active: cat.is_active })
       .select('*')
       .single()
-    if (error) throw error
+    if (error) throw toError(error)
     return data as Category
   }
 
@@ -344,12 +378,12 @@ export class SupabaseRepository implements ExamRepository {
     if (filter.search) query = query.ilike('question_text', `%${filter.search}%`)
     const from = (page - 1) * pageSize
     const { data, error, count } = await query.order('created_at', { ascending: false }).range(from, from + pageSize - 1)
-    if (error) throw error
+    if (error) throw toError(error)
     const ids = (data ?? []).map((q: any) => q.id)
     let opts: any[] = []
     if (ids.length) {
       const { data: options, error: optsErr } = await this.sb.from('question_options').select('*').in('question_id', ids)
-      if (optsErr) throw optsErr
+      if (optsErr) throw toError(optsErr)
       opts = options ?? []
     }
     const rows = (data ?? []).map((q: any) => ({
@@ -367,7 +401,7 @@ export class SupabaseRepository implements ExamRepository {
         .eq('id', id)
         .select('*')
         .single()
-      if (error) throw error
+      if (error) throw toError(error)
       await this.sb.from('question_options').delete().eq('question_id', id)
       const insertOpts = draft.options.map((o, i) => ({
         question_id: id,
@@ -376,7 +410,7 @@ export class SupabaseRepository implements ExamRepository {
         sort_order: i,
       }))
       const { error: optErr } = await this.sb.from('question_options').insert(insertOpts)
-      if (optErr) throw optErr
+      if (optErr) throw toError(optErr)
       const { data: full } = await this.sb.from('questions').select('*').eq('id', id).single()
    return {
         ...(upd ?? (full as Question)),
@@ -401,7 +435,7 @@ export class SupabaseRepository implements ExamRepository {
       })
       .select('*')
       .single()
-    if (error) throw error
+    if (error) throw toError(error)
     const qid = data.id
     const insertOpts = draft.options.map((o, i) => ({
       question_id: qid,
@@ -410,7 +444,7 @@ export class SupabaseRepository implements ExamRepository {
       sort_order: i,
     }))
     const { error: optErr } = await this.sb.from('question_options').insert(insertOpts)
-    if (optErr) throw optErr
+    if (optErr) throw toError(optErr)
     return {
       ...(data as Question),
       options: draft.options.map((o, i) => ({
@@ -425,12 +459,12 @@ export class SupabaseRepository implements ExamRepository {
 
   async setQuestionActive(id: string, active: boolean): Promise<void> {
     const { error } = await this.sb.from('questions').update({ is_active: active }).eq('id', id)
-    if (error) throw error
+    if (error) throw toError(error)
   }
 
   async getSettingsAdmin(): Promise<QuizSettings[]> {
     const { data, error } = await this.sb.from('quiz_settings').select('*')
-    if (error) throw error
+    if (error) throw toError(error)
     return (data ?? []) as QuizSettings[]
   }
 
@@ -445,7 +479,7 @@ export class SupabaseRepository implements ExamRepository {
           time_limit_minutes: item.time_limit_minutes,
           passing_score: item.passing_score,
         })
-      if (error) throw error
+      if (error) throw toError(error)
     }
   }
 
@@ -474,7 +508,7 @@ export class SupabaseRepository implements ExamRepository {
       )
       .order('started_at', { ascending: false })
       .limit(limit)) as any
-    if (error) throw error
+    if (error) throw toError(error)
     return ((data ?? []) as any[]).map((a) => {
       const exam = a.exams as { title?: string; passing_score?: number } | null | undefined
       return {
@@ -499,11 +533,11 @@ export class SupabaseRepository implements ExamRepository {
       .from('exams')
       .select('id, title, slug, is_active')
       .order('created_at', { ascending: true })) as any
-    if (eErr) throw eErr
+    if (eErr) throw toError(eErr)
     const { data: sub, error: sErr } = (await this.sb
       .from('quiz_attempts')
       .select('exam_id, status, score_percent, passing_score, started_at, submitted_at')) as any
-    if (sErr) throw sErr
+    if (sErr) throw toError(sErr)
     const grouping = groupAttemptsByExam(
       ((sub ?? []) as any[]).map((row) => ({
         id: String(row.id),
@@ -542,7 +576,7 @@ export class SupabaseRepository implements ExamRepository {
       )
       .eq('exam_id', examId)
       .order('started_at', { ascending: false })) as any
-    if (error) throw error
+    if (error) throw toError(error)
     return ((data ?? []) as any[]).map((a) => {
       const exam = a.exams as { title?: string; passing_score?: number } | null | undefined
       return {
@@ -570,7 +604,7 @@ export class SupabaseRepository implements ExamRepository {
       )
       .eq('id', attemptId)
       .maybeSingle()) as any
-    if (attErr) throw attErr
+    if (attErr) throw toError(attErr)
     if (!att) throw new Error('المحاولة غير موجودة')
     const exam = att.exams as { title?: string; passing_score?: number } | null | undefined
 
@@ -581,7 +615,7 @@ export class SupabaseRepository implements ExamRepository {
       )
       .eq('attempt_id', attemptId)
       .order('display_order', { ascending: true })) as any
-    if (qErr) throw qErr
+    if (qErr) throw toError(qErr)
 
     const review = (qs ?? []).map((row: any) => {
       const options: QuizOption[] = (Array.isArray(row.option_order) ? row.option_order : []).map((o: any) => ({
