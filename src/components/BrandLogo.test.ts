@@ -23,13 +23,13 @@ function pngSize(file: string): { width: number; height: number } {
 
 // نفس جدول النسب في BrandLogo.tsx
 const EXPECTED: Record<string, { width: number; height: number }> = {
-  'logo.png': { width: 415, height: 512 },
-  'logo-dark.png': { width: 415, height: 512 },
-  'logo-horizontal.png': { width: 564, height: 192 },
-  'logo-horizontal-dark.png': { width: 564, height: 192 },
-  'logo-mark.png': { width: 360, height: 320 },
-  'logo-mark-dark.png': { width: 360, height: 320 },
-  'logo-favicon.png': { width: 203, height: 180 },
+  'logo.png': { width: 384, height: 512 },
+  'logo-dark.png': { width: 384, height: 512 },
+  'logo-horizontal.png': { width: 532, height: 192 },
+  'logo-horizontal-dark.png': { width: 532, height: 192 },
+  'logo-mark.png': { width: 353, height: 320 },
+  'logo-mark-dark.png': { width: 353, height: 320 },
+  'logo-favicon.png': { width: 199, height: 180 },
 }
 
 describe('شعار SDG — الأصول', () => {

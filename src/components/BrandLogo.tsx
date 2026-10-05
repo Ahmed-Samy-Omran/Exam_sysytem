@@ -18,19 +18,19 @@ const VARIANTS: Record<LogoVariant, Variant> = {
   stacked: {
     light: 'assets/logo.png',
     dark: 'assets/logo-dark.png',
-    aspect: 415 / 512,
+    aspect: 384 / 512,
     height: 128,
   },
   horizontal: {
     light: 'assets/logo-horizontal.png',
     dark: 'assets/logo-horizontal-dark.png',
-    aspect: 564 / 192,
+    aspect: 532 / 192,
     height: 40,
   },
   mark: {
     light: 'assets/logo-mark.png',
     dark: 'assets/logo-mark-dark.png',
-    aspect: 360 / 320,
+    aspect: 353 / 320,
     height: 40,
   },
 }

@@ -30,14 +30,14 @@ ASSETS = ROOT / "public" / "assets"
 
 DEFAULT_SOURCE = Path.home() / "Downloads" / "WhatsApp Image 2026-10-03 at 10.13.53 PM.jpeg"
 
-# Flat background colour of the source export.
-BG = (247, 247, 247)
-
 # Alpha ramp endpoints, measured from the source: JPEG noise around the artwork
-# sits at ~2-10 units of distance, the first genuinely covered pixel at ~25.
+# sits well below ALPHA_LO, the first genuinely covered pixel above ALPHA_HI.
 # Anything between is partial coverage and gets a smooth alpha.
 ALPHA_LO = 14
 ALPHA_HI = 50
+
+# Highest luma still considered "dark ink" for the dark variant.
+NEUTRAL_MAX = 170.0
 
 # Output heights in pixels. Each mark is only ever rendered small, so these
 # keep it crisp on HiDPI screens without shipping unnecessary weight.
@@ -52,11 +52,30 @@ def smoothstep(t: float) -> float:
     return t * t * (3.0 - 2.0 * t)
 
 
-def distance_from_bg(pixel: tuple[int, int, int]) -> int:
-    return max(abs(pixel[i] - BG[i]) for i in range(3))
+def detect_background(image: Image.Image) -> tuple[int, int, int]:
+    """Estimate the flat background colour from the image corners.
+
+    Hardcoding a background colour is a trap: the first export was #f7f7f7 and
+    the regenerated one is #ffffff, and a wrong guess keys out the artwork
+    itself. The median of the four corners is stable against JPEG noise and
+    works for both centred-mark and full-bleed sources.
+    """
+    rgb = image.convert("RGB")
+    w, h = rgb.size
+    inset = max(1, min(w, h) // 100)
+    samples = [
+        rgb.getpixel((x, y))
+        for x in (inset, w - 1 - inset)
+        for y in (inset, h - 1 - inset)
+    ]
+    return tuple(sorted(channel)[len(channel) // 2] for channel in zip(*samples))
 
 
-def key_out_background(image: Image.Image) -> Image.Image:
+def distance_from_bg(pixel: tuple[int, int, int], bg: tuple[int, int, int]) -> int:
+    return max(abs(pixel[i] - bg[i]) for i in range(3))
+
+
+def key_out_background(image: Image.Image, bg: tuple[int, int, int]) -> Image.Image:
     """Replace the flat background with a real alpha channel.
 
     The alpha ramp is measured from the source. Edge *colours* are not
@@ -78,7 +97,7 @@ def key_out_background(image: Image.Image) -> Image.Image:
         for x in range(width):
             index = y * width + x
             pixel = src[x, y]
-            distance = distance_from_bg(pixel)
+            distance = distance_from_bg(pixel, bg)
 
             if distance <= ALPHA_LO:
                 continue  # background: leave fully transparent
@@ -163,10 +182,15 @@ def to_dark_variant(image: Image.Image) -> Image.Image:
             luma = (r * 299 + g * 587 + b * 114) / 1000.0
 
             # Neutral and dark only: leave anything with real colour alone.
-            if chroma > 60 or luma > 110:
+            #
+            # NEUTRAL_MAX has to sit above the logo's own light-neutral ink
+            # (luma ~169) or those pixels get lifted too and lose their edge
+            # against the coloured marks. With the ceiling at 170, a light-grey
+            # pixel ramps to ~0 and dark grey (~88) reaches ~167.
+            if chroma > 60 or luma > NEUTRAL_MAX:
                 continue
 
-            strength = smoothstep((110.0 - luma) / 110.0)
+            strength = smoothstep((NEUTRAL_MAX - luma) / NEUTRAL_MAX)
             dst[x, y] = (
                 round(r + (255 - r) * strength),
                 round(g + (255 - g) * strength),
@@ -261,22 +285,23 @@ def main() -> int:
     ASSETS.mkdir(parents=True, exist_ok=True)
 
     with Image.open(source) as raw:
-        keyed = trim(key_out_background(raw))
+        bg = detect_background(raw)
+        keyed = trim(key_out_background(raw, bg))
+
+    bands = split_bands(keyed)
+    print(f"source        : {source.name}")
+    print(f"background    : rgb{bg} (detected from corners)")
+    print(f"content bands : {len(bands)}")
 
     horizontal = trim(compose_horizontal(keyed))
 
+    mark_band = bands[0][1] + 1
     outputs = {
         "logo.png": resize_to_height(keyed, OUTPUT_HEIGHT),
         "logo-horizontal.png": resize_to_height(horizontal, HORIZONTAL_HEIGHT),
-        "logo-mark.png": resize_to_height(
-            trim(keyed.crop((0, 0, keyed.width, split_bands(keyed)[0][1] + 1))),
-            MARK_HEIGHT,
-        ),
+        "logo-mark.png": resize_to_height(trim(keyed.crop((0, 0, keyed.width, mark_band))), MARK_HEIGHT),
         # 180px يغطي apple-touch-icon بأعلى كثافة، ويبقي الأيقونة خفيفة.
-        "logo-favicon.png": resize_to_height(
-            trim(keyed.crop((0, 0, keyed.width, split_bands(keyed)[0][1] + 1))),
-            FAVICON_HEIGHT,
-        ),
+        "logo-favicon.png": resize_to_height(trim(keyed.crop((0, 0, keyed.width, mark_band))), FAVICON_HEIGHT),
     }
 
     written: list[Path] = []
