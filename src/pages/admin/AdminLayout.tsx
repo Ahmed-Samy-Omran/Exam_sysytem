@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { Home as HomeIcon, ListChecks, Settings as SettingsIcon, Tags, LayoutDashboard, LogOut, HelpCircle, ClipboardList, Zap, Menu } from 'lucide-react'
 import { Spinner } from '@/components/ui'
+import { BrandLogo } from '@/components/BrandLogo'
 import { getRepository } from '@/lib/repository/factory'
 
 const navItems = [
@@ -46,7 +47,14 @@ export function AdminLayout() {
   return (
     <div className="flex min-h-screen">
       <aside className="sticky top-0 flex h-screen w-60 shrink-0 flex-col border-e border-border bg-card p-4 max-sm:hidden">
-        <p className="mb-6 text-lg font-extrabold text-primary">لوحة الإدارة</p>
+        <Link
+          to="/"
+          className="mb-5 flex shrink-0 items-center rounded-lg"
+          aria-label="SDG — عرض الموقع"
+        >
+          <BrandLogo variant="horizontal" height={34} />
+        </Link>
+        <p className="mb-5 text-base font-extrabold text-primary">لوحة الإدارة</p>
         <nav className="space-y-1">
           {navItems.map((item) => (
             <NavLink
@@ -92,6 +100,7 @@ export function AdminLayout() {
             >
               <Menu className="h-5 w-5" />
             </button>
+            <BrandLogo variant="horizontal" height={28} />
             <span className="font-extrabold text-primary">لوحة الإدارة</span>
           </div>
           <button type="button" onClick={logout} className="btn btn-ghost text-sm">خروج</button>

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button, Card, Field, PageHeader } from '@/components/ui'
+import { BrandLogo } from '@/components/BrandLogo'
 import { getMode, getRepository } from '@/lib/repository/factory'
 
 const MOCK_DEMO = { user: 'omar', pass: 'omar369@' }
@@ -31,6 +32,9 @@ export function AdminLoginPage() {
   return (
     <main className="flex min-h-[80vh] items-center justify-center px-4">
       <Card className="w-full max-w-sm p-6">
+        <div className="mb-4 flex justify-center">
+          <BrandLogo variant="horizontal" height={40} />
+        </div>
         <PageHeader title="لوحة الإدارة" subtitle="سجّل دخول المدير" />
         <div className="space-y-4">
           <Field label={isMock ? 'الاسم' : 'البريد الإلكتروني'}>
