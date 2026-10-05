@@ -105,52 +105,57 @@ export function QuizResultPage() {
         )}
       </div>
 
-      <h3 className="mt-10 mb-4 text-lg font-extrabold">مراجعة الإجابات</h3>
-      {result.show_answers === false ? (
-        <EmptyState title="لا تتوفر مراجعة الإجابات لهذا الامتحان" hint="عُرضت النتيجة فقط بناءً على إعدادات الامتحان." />
-      ) : result.review.length === 0 ? (
-        <EmptyState title="لا توجد أسئلة للمراجعة" />
-      ) : (
-        <div className="space-y-4">
-          {result.review.map((item) => (
-            <Card key={item.question.question_id} className="overflow-hidden">
-              <div className="flex items-start justify-between gap-3 p-5 pb-3">
-                <p className="font-bold leading-relaxed">{item.question.question_text}</p>
-                <Badge className={item.is_correct ? 'badge-success' : 'badge-destructive'}>
-                  {item.is_correct ? 'صحيح' : item.answered ? 'خطأ' : 'غير مجاب'}
-                </Badge>
-              </div>
-              <div className="space-y-1 px-5 pb-3">
-                {item.question.options.map((o) => {
-                  const isCorrect = o.option_id === item.correct_option_id
-                  const isChosen = o.option_id === item.chosen_option_id
-                  let cls = 'border-border'
-                  if (isCorrect) cls = 'border-success bg-success/10'
-                  else if (isChosen) cls = 'border-destructive bg-destructive/10'
-                  return (
-                    <div
-                      key={o.option_id}
-                      className={`rounded-lg border px-3 py-2 text-sm ${
-                        isCorrect || isChosen ? 'font-bold' : ''
-                      } ${cls}`}
-                    >
-                      <span className="me-2">{String.fromCharCode(65 + getOptionIndex(item.question.options, o.option_id))}.</span>
-                      {o.option_text}
-                      {isCorrect ? <span className="ms-2 text-[#15803d]">✓</span> : null}
-                      {isChosen && !isCorrect ? <span className="ms-2 text-[#b91c1c]">✗</span> : null}
+      {/* إيقاف `show_answers` يُخفي القسم كله — العنوان والبطاقة معًا.
+          البديل كان بطاقة "لا تتوفر مراجعة" تترك للمتقدم إحساسًا بأن هناك
+          محتوىً ناقصًا، بينما القرار مقصود من الأدمن. */}
+      {result.show_answers === false ? null : (
+        <>
+          <h3 className="mt-10 mb-4 text-lg font-extrabold">مراجعة الإجابات</h3>
+          {result.review.length === 0 ? (
+            <EmptyState title="لا توجد أسئلة للمراجعة" />
+          ) : (
+            <div className="space-y-4">
+              {result.review.map((item) => (
+                <Card key={item.question.question_id} className="overflow-hidden">
+                  <div className="flex items-start justify-between gap-3 p-5 pb-3">
+                    <p className="font-bold leading-relaxed">{item.question.question_text}</p>
+                    <Badge className={item.is_correct ? 'badge-success' : 'badge-destructive'}>
+                      {item.is_correct ? 'صحيح' : item.answered ? 'خطأ' : 'غير مجاب'}
+                    </Badge>
+                  </div>
+                  <div className="space-y-1 px-5 pb-3">
+                    {item.question.options.map((o) => {
+                      const isCorrect = o.option_id === item.correct_option_id
+                      const isChosen = o.option_id === item.chosen_option_id
+                      let cls = 'border-border'
+                      if (isCorrect) cls = 'border-success bg-success/10'
+                      else if (isChosen) cls = 'border-destructive bg-destructive/10'
+                      return (
+                        <div
+                          key={o.option_id}
+                          className={`rounded-lg border px-3 py-2 text-sm ${
+                            isCorrect || isChosen ? 'font-bold' : ''
+                          } ${cls}`}
+                        >
+                          <span className="me-2">{String.fromCharCode(65 + getOptionIndex(item.question.options, o.option_id))}.</span>
+                          {o.option_text}
+                          {isCorrect ? <span className="ms-2 text-[#15803d]">✓</span> : null}
+                          {isChosen && !isCorrect ? <span className="ms-2 text-[#b91c1c]">✗</span> : null}
+                        </div>
+                      )
+                    })}
+                  </div>
+                  {item.explanation ? (
+                    <div className="border-t border-border bg-muted/50 px-5 py-3 text-sm leading-relaxed">
+                      <span className="font-bold text-primary">التصحيح: </span>
+                      {item.explanation}
                     </div>
-                  )
-                })}
-              </div>
-              {item.explanation ? (
-                <div className="border-t border-border bg-muted/50 px-5 py-3 text-sm leading-relaxed">
-                  <span className="font-bold text-primary">التصحيح: </span>
-                  {item.explanation}
-                </div>
-              ) : null}
-            </Card>
-          ))}
-        </div>
+                  ) : null}
+                </Card>
+              ))}
+            </div>
+          )}
+        </>
       )}
     </main>
   )
