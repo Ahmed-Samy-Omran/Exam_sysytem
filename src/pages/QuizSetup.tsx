@@ -18,6 +18,8 @@ export function QuizSetupPage() {
   const [mode, setMode] = useState<'all' | 'single'>('all')
   const [selectedSlug, setSelectedSlug] = useState<string>('')
   const [timerMin, setTimerMin] = useState<string>('30')
+  // المراجعة مفعّلة افتراضيًا: نص صفحة الإعداد نفسه يَعِد المتقدم بها.
+  const [showAnswers, setShowAnswers] = useState(true)
   const [busy, setBusy] = useState(false)
   const [created, setCreated] = useState<{ title: string; slug: string; link: string } | null>(null)
   const [copied, setCopied] = useState(false)
@@ -68,11 +70,15 @@ export function QuizSetupPage() {
         title: mode === 'all' ? 'اختبار سريع شامل' : `اختبار سريع: ${selected[0]?.name ?? 'قسم واحد'}`,
         slug: `quick-${Date.now().toString(36)}`,
         description: null,
-        instructions: 'أجب على الأسئلة في الوقت المحدد. بعد التسليم تحصل على النتيجة والمراجعة الكاملة للإجابات.',
+        // التعليمات تتبع الخيار نفسه، وإلا وعدت صفحة الإعداد بمراجعة لا تظهر
+        // فعليًا لمن أوقف الخيار.
+        instructions: showAnswers
+          ? 'أجب على الأسئلة في الوقت المحدد. بعد التسليم تحصل على النتيجة والمراجعة الكاملة للإجابات.'
+          : 'أجب عن الأسئلة في الوقت المحدد. بعد التسليم تحصل على النتيجة فقط.',
         passing_score: Math.max(0, ...selected.map((c) => settings[c.slug]?.passing_score ?? 70)),
         time_limit_minutes: timeoutValue,
         allow_retakes: true,
-        show_answers: true,
+        show_answers: showAnswers,
         sections: selected.map((c) => ({ category_id: c.id, question_count: counts[c.slug] })),
       })
       setCopied(false)
@@ -188,6 +194,26 @@ export function QuizSetupPage() {
               placeholder="مثال: 30"
             />
           </Field>
+
+          {/* لوحة بعرض الحاوية مع حقل المؤقت: الخيار ليس حقلًا رقميًا، ووضعه
+              داخل الشبكة نفسها كان سيكسر المحاذاة مع `.input`. */}
+          <div className="rounded-xl border border-border bg-card p-3">
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="quickShowAnswers"
+                checked={showAnswers}
+                onChange={(e) => setShowAnswers(e.target.checked)}
+                className="h-4 w-4 shrink-0 accent-primary"
+              />
+              <label htmlFor="quickShowAnswers" className="cursor-pointer text-sm font-bold">
+                عرض مراجعة الإجابات بعد التسليم
+              </label>
+            </div>
+            <p className="mt-1 ps-6 text-xs text-muted-foreground">
+              عند الإيقاف تظهر للمتقدم النتيجة فقط دون مراجعة الأسئلة والإجابات.
+            </p>
+          </div>
         </div>
 
         <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-between">

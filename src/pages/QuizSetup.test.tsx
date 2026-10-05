@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { QuizSetupPage } from './QuizSetup'
@@ -40,5 +40,62 @@ describe('QuizSetupPage — إنشاء رابط امتحان للمتقدمين'
     const exam = await repo.getExamBySlug(slug)
     expect(exam).not.toBeNull()
     expect(exam?.title).toBe('اختبار سريع شامل')
+  })
+
+  it('يعرض خيار مراجعة الإجابات مفعّلًا افتراضيًا', async () => {
+    vi.mocked(getRepository).mockReturnValue(new MockRepository())
+
+    render(
+      <MemoryRouter>
+        <QuizSetupPage />
+      </MemoryRouter>,
+    )
+
+    const box = (await screen.findByLabelText(
+      'عرض مراجعة الإجابات بعد التسليم',
+    )) as HTMLInputElement
+    expect(box.checked).toBe(true)
+  })
+
+  it('يمرّر show_answers=true إلى الامتحان المنشور بشكل افتراضي', async () => {
+    const repo = new MockRepository()
+    vi.mocked(getRepository).mockReturnValue(repo)
+
+    render(
+      <MemoryRouter>
+        <QuizSetupPage />
+      </MemoryRouter>,
+    )
+
+    const button = await screen.findByRole('button', { name: /إنشاء رابط الامتحان/ })
+    await waitFor(() => expect(button).not.toBeDisabled())
+    fireEvent.click(button)
+
+    const linkInput = await screen.findByDisplayValue(/exam=quick-/)
+    const slug = (linkInput as HTMLInputElement).value.split('exam=')[1]
+    expect((await repo.getExamBySlug(slug))?.show_answers).toBe(true)
+  })
+
+  it('يحفظ show_answers=false عندما يوقف الأدمن الخيار', async () => {
+    const repo = new MockRepository()
+    vi.mocked(getRepository).mockReturnValue(repo)
+
+    render(
+      <MemoryRouter>
+        <QuizSetupPage />
+      </MemoryRouter>,
+    )
+
+    const box = await screen.findByLabelText('عرض مراجعة الإجابات بعد التسليم')
+    fireEvent.click(box)
+    expect((box as HTMLInputElement).checked).toBe(false)
+
+    const button = screen.getByRole('button', { name: /إنشاء رابط الامتحان/ })
+    await waitFor(() => expect(button).not.toBeDisabled())
+    fireEvent.click(button)
+
+    const linkInput = await screen.findByDisplayValue(/exam=quick-/)
+    const slug = (linkInput as HTMLInputElement).value.split('exam=')[1]
+    expect((await repo.getExamBySlug(slug))?.show_answers).toBe(false)
   })
 })
