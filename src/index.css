@@ -1,20 +1,20 @@
 @import 'tailwindcss';
 
 @theme {
-  --color-primary: #0d9488;
+  --color-primary: #1a6aa6;
   --color-on-primary: #ffffff;
-  --color-secondary: #2dd4bf;
-  --color-background: #f0fdfa;
-  --color-foreground: #134e4a;
+  --color-secondary: #34a3d8;
+  --color-background: #f2f7fc;
+  --color-foreground: #19365e;
   --color-card: #ffffff;
-  --color-card-foreground: #134e4a;
-  --color-muted: #e8f1f4;
-  --color-muted-foreground: #475569;
-  --color-border: #5eead4;
-  --color-accent: #d97706;
+  --color-card-foreground: #19365e;
+  --color-muted: #e7eef7;
+  --color-muted-foreground: #4a5f7a;
+  --color-border: #b3cdea;
+  --color-accent: #f48e20;
   --color-destructive: #dc2626;
   --color-success: #16a34a;
-  --color-ring: #0d9488;
+  --color-ring: #1a6aa6;
   --color-accounting: #16a34a;
   --color-iq: #7c3aed;
   --color-excel: #ea580c;
@@ -30,6 +30,11 @@
     font-family: var(--font-sans);
     color: var(--color-foreground);
     background-color: var(--color-background);
+    color-scheme: light;
+    caret-color: var(--color-primary);
+    scrollbar-color: color-mix(in srgb, var(--color-border), var(--color-foreground) 30%)
+      transparent;
+    scrollbar-width: thin;
   }
 
   body {
@@ -46,6 +51,31 @@
   h4,
   h5 {
     font-family: var(--font-heading);
+    text-wrap: balance;
+  }
+
+  ::selection {
+    background-color: color-mix(in srgb, var(--color-primary) 24%, transparent);
+    color: var(--color-foreground);
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: color-mix(in srgb, var(--color-border), var(--color-foreground) 30%);
+    border: 2px solid var(--color-background);
+    border-radius: 9999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: color-mix(in srgb, var(--color-border), var(--color-foreground) 48%);
   }
 
   :focus-visible {
@@ -94,7 +124,10 @@
     color: var(--color-on-primary);
   }
   .btn-primary:not(:disabled):hover {
-    opacity: 0.9;
+    background-color: color-mix(in srgb, var(--color-primary) 86%, #000);
+  }
+  .btn-primary:not(:disabled):active {
+    background-color: color-mix(in srgb, var(--color-primary) 74%, #000);
   }
 
   .btn-outline {
@@ -119,7 +152,10 @@
     color: #ffffff;
   }
   .btn-danger:not(:disabled):hover {
-    opacity: 0.9;
+    background-color: color-mix(in srgb, var(--color-destructive) 86%, #000);
+  }
+  .btn-danger:not(:disabled):active {
+    background-color: color-mix(in srgb, var(--color-destructive) 74%, #000);
   }
 
   .badge {
@@ -135,7 +171,7 @@
 
   .badge-accounting {
     background-color: rgb(22 163 74 / 0.12);
-    color: #15803d;
+    color: #147739;
   }
   .badge-iq {
     background-color: rgb(124 58 237 / 0.12);
@@ -143,7 +179,7 @@
   }
   .badge-excel {
     background-color: rgb(234 88 12 / 0.12);
-    color: #c2410c;
+    color: #b53d0b;
   }
   .badge-muted {
     background-color: var(--color-muted);
@@ -151,7 +187,7 @@
   }
   .badge-success {
     background-color: rgb(22 163 74 / 0.12);
-    color: #15803d;
+    color: #147739;
   }
   .badge-destructive {
     background-color: rgb(220 38 38 / 0.12);

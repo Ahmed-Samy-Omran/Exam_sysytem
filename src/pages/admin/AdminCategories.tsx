@@ -3,7 +3,7 @@ import { Plus, Save } from 'lucide-react'
 import { Button, Card, PageHeader } from '@/components/ui'
 import { getRepository } from '@/lib/repository/factory'
 
-const ACCENTS = ['#0D9488', '#16A34A', '#7C3AED', '#EA580C', '#DC2626', '#0284C7']
+const ACCENTS = ['#1A6AA6', '#16A34A', '#7C3AED', '#EA580C', '#DC2626', '#0284C7']
 
 interface Draft {
   id?: string

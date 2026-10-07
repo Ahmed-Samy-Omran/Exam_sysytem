@@ -12,22 +12,30 @@ Generated with **UI UX Pro Max** (product: *LMS / Learning Management System*) a
 
 ## Colors (Tailwind v4 theme tokens)
 
-| Role | Hex | Token |
-|---|---|---|
-| Primary (teal) | `#0D9488` | `--color-primary` |
-| On Primary | `#FFFFFF` | `--color-on-primary` |
-| Secondary | `#2DD4BF` | `--color-secondary` |
-| Background | `#F0FDFA` | `--color-background` |
-| Foreground | `#134E4A` | `--color-foreground` |
-| Card | `#FFFFFF` | `--color-card` |
-| Card Foreground | `#134E4A` | `--color-card-foreground` |
-| Muted | `#E8F1F4` | `--color-muted` |
-| Muted Foreground | `#475569` | `--color-muted-foreground` |
-| Border | `#5EEAD4` | `--color-border` |
-| Accent (amber) | `#D97706` | `--color-accent` |
-| Destructive / Wrong | `#DC2626` | `--color-destructive` |
-| Success / Correct | `#16A34A` | `--color-success` |
-| Ring / Focus | `#0D9488` | `--color-ring` |
+Palette extracted directly from the SDG logo assets in `public/assets/`
+(`logo.png`, `logo-horizontal.png`, `logo-mark.png`, `logo-favicon.png`) —
+deep blue, sky blue, orange and navy are the logo's own hues, so the UI now
+reads as one brand with the logo instead of a competing teal theme.
+
+| Role | Hex | Token | Logo source |
+|---|---|---|---|
+| Primary (deep blue) | `#1A6AA6` | `--color-primary` | logo blue (dominant) |
+| On Primary | `#FFFFFF` | `--color-on-primary` | — |
+| Secondary (sky blue) | `#34A3D8` | `--color-secondary` | logo bright blue |
+| Background | `#F2F7FC` | `--color-background` | tint of primary hue |
+| Foreground (navy) | `#19365E` | `--color-foreground` | logo wordmark navy |
+| Card | `#FFFFFF` | `--color-card` | — |
+| Card Foreground | `#19365E` | `--color-card-foreground` | logo wordmark navy |
+| Muted | `#E7EEF7` | `--color-muted` | tint of primary hue |
+| Muted Foreground | `#4A5F7A` | `--color-muted-foreground` | navy desaturated |
+| Border | `#B3CDEA` | `--color-border` | primary at low strength |
+| Accent (orange) | `#F48E20` | `--color-accent` | logo orange |
+| Destructive / Wrong | `#DC2626` | `--color-destructive` | semantic (unchanged) |
+| Success / Correct | `#16A34A` | `--color-success` | semantic (unchanged) |
+| Ring / Focus | `#1A6AA6` | `--color-ring` | matches primary |
+
+Contrast floor (verified): foreground/navy on background ≥ 10:1, white on
+primary ≥ 5.5:1, muted-foreground on card ≥ 6:1, muted-foreground on muted ≥ 5.5:1.
 
 ### Category accent colors
 | Category | Hex | Token |
