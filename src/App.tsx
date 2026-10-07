@@ -15,7 +15,6 @@ import { AdminExamsPage } from '@/pages/admin/AdminExams'
 import { AdminAttemptDetailsPage } from '@/pages/admin/AdminAttemptDetails'
 import { AdminExamAttemptsPage } from '@/pages/admin/AdminExamAttempts'
 import { NotFoundPage } from '@/pages/NotFound'
-import { ModeBanner } from '@/components/ModeBanner'
 import { PublicLayout } from '@/components/PublicLayout'
 import { ExamStartPage } from '@/pages/ExamStartPage'
 
@@ -24,7 +23,6 @@ const AboutPage = lazy(() => import('@/pages/About').then((m) => ({ default: m.A
 export default function App() {
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <ModeBanner />
       <Suspense fallback={null}>
         <Routes>
           <Route element={<PublicLayout />}>

@@ -91,7 +91,7 @@ export function AdminSettingsPage() {
           </div>
         ))}
 
-        <div className="flex items-center justify-end gap-3 border-t border-border pt-4">
+        <div className="flex flex-wrap items-center justify-end gap-2 border-t border-border pt-4 sm:gap-3">
           {saved ? <span className="text-sm font-bold text-success">تم الحفظ</span> : null}
           <Button onClick={saveAll} disabled={busy}>
             <Save className="h-4 w-4" />

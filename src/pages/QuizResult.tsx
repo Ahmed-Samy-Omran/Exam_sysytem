@@ -38,7 +38,7 @@ export function QuizResultPage() {
   }
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-8">
+    <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
       <div className="mb-6 flex justify-center">
         <BrandLogo variant="stacked" height={120} />
       </div>

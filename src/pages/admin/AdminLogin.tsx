@@ -30,7 +30,7 @@ export function AdminLoginPage() {
   }
 
   return (
-    <main className="flex min-h-[80vh] items-center justify-center px-4">
+    <main className="flex min-h-[80vh] items-center justify-center px-4 sm:px-6">
       <Card className="w-full max-w-sm p-6">
         <div className="mb-4 flex justify-center">
           <BrandLogo variant="horizontal" height={40} />

@@ -155,7 +155,7 @@ export function AdminQuestionsPage() {
               </tbody>
             </table>
           </div>
-          <div className="flex items-center justify-between border-t border-border p-3 text-sm">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border p-3 text-sm">
             <span className="text-muted-foreground">
               صفحة {page} من {pages}
             </span>

@@ -19,7 +19,7 @@
 ## التشغيل محليًا
 
 > بدون مفاتيح Supabase تعمل المنصة **في وضع محاكاة (mock)** داخل المتصفح
-> مع بيانات تجريبية — يتضح ذلك بشريط برتقالي أعلى الصفحة.
+> مع بيانات تجريبية محلية.
 
 ```bash
 npm install
@@ -80,7 +80,7 @@ git push origin main
 
 ```
 src/
-  components/   مكونات واجهة عامة + ModeBanner
+  components/   مكونات واجهة عامة
   lib/
     quiz-engine.ts        محرّك الاختبار (نقي، مختبَر)
     repository.ts         بوابة البيانات (interface)

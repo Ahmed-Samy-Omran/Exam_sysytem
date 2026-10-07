@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 
 export function AboutPage() {
   return (
-    <main className="mx-auto max-w-2xl px-4 py-12">
+    <main className="mx-auto max-w-2xl px-4 py-12 sm:px-6">
       <h1 className="text-3xl font-extrabold">عن المنصة</h1>
       <p className="mt-4 leading-relaxed text-muted-foreground">
         منصة تدريبية تسمح بأداء اختبار عشوائي من ثلاثة أقسام: المحاسبة، الذكاء، و Excel.

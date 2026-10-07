@@ -113,17 +113,22 @@ export function Modal({
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="card w-full max-w-md p-5"
+        className="card max-h-[85vh] w-full max-w-md overflow-y-auto p-5"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-3 flex items-center justify-between">
           <h3 className="text-lg font-bold">{title}</h3>
-          <button type="button" onClick={onClose} aria-label="إغلاق" className="cursor-pointer rounded-md p-1 hover:bg-muted">
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="إغلاق"
+            className="flex min-h-10 min-w-10 cursor-pointer items-center justify-center rounded-md p-2 hover:bg-muted"
+          >
             <X className="h-5 w-5" />
           </button>
         </div>
         <div>{children}</div>
-        {footer ? <div className="mt-5 flex justify-end gap-2">{footer}</div> : null}
+        {footer ? <div className="mt-5 flex flex-wrap justify-end gap-2">{footer}</div> : null}
       </div>
     </div>
   )
@@ -152,7 +157,7 @@ export function Field({
 
 export function EmptyState({ title, hint }: { title: string; hint?: string }) {
   return (
-    <div className="card flex flex-col items-center justify-center gap-2 p-10 text-center">
+    <div className="card flex flex-col items-center justify-center gap-2 p-6 text-center sm:p-10">
       <p className="font-bold">{title}</p>
       {hint ? <p className="text-sm text-muted-foreground">{hint}</p> : null}
     </div>
@@ -166,7 +171,7 @@ export function PageHeader({ title, subtitle, actions }: { title: string; subtit
         <h1 className="text-xl font-extrabold sm:text-2xl">{title}</h1>
         {subtitle ? <p className="mt-0.5 text-sm text-muted-foreground sm:mt-1">{subtitle}</p> : null}
       </div>
-      {actions ? <div className="flex items-center gap-2">{actions}</div> : null}
+      {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
     </div>
   )
 }

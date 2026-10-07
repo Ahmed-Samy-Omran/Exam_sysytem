@@ -49,7 +49,7 @@ export function AdminLayout() {
       <aside className="sticky top-0 flex h-screen w-60 shrink-0 flex-col border-e border-border bg-card p-4 max-sm:hidden">
         <Link
           to="/"
-          className="mb-5 flex shrink-0 items-center rounded-lg"
+          className="mb-5 flex min-h-10 shrink-0 items-center rounded-lg"
           aria-label="SDG — عرض الموقع"
         >
           <BrandLogo variant="horizontal" height={34} />
@@ -89,14 +89,14 @@ export function AdminLayout() {
       </aside>
 
       <div className="min-w-0 flex-1">
-        <header className="flex items-center justify-between gap-3 border-b border-border bg-card px-3 py-2 max-sm:flex sm:hidden">
+        <header className="flex items-center justify-between gap-3 border-b border-border bg-card px-4 py-2 max-sm:flex sm:hidden">
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => setMenuOpen((o) => !o)}
               aria-label="القائمة"
               aria-expanded={menuOpen}
-              className="cursor-pointer rounded-lg border border-border p-2 hover:bg-muted"
+              className="flex min-h-10 min-w-10 cursor-pointer items-center justify-center rounded-lg border border-border p-2 hover:bg-muted"
             >
               <Menu className="h-5 w-5" />
             </button>
@@ -106,7 +106,7 @@ export function AdminLayout() {
           <button type="button" onClick={logout} className="btn btn-ghost text-sm">خروج</button>
         </header>
         {menuOpen ? (
-          <nav className="border-b border-border bg-card px-3 py-2 sm:hidden">
+          <nav className="border-b border-border bg-card px-4 py-3 sm:hidden">
             <div className="space-y-1">
               {navItems.map((item) => (
                 <NavLink
@@ -137,7 +137,7 @@ export function AdminLayout() {
             </div>
           </nav>
         ) : null}
-        <main className="p-3 sm:p-8">
+        <main className="px-4 py-4 sm:px-6 sm:py-6">
           <Outlet />
         </main>
       </div>

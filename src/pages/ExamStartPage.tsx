@@ -172,7 +172,7 @@ export function ExamStartPage() {
 
   if (examError) {
     return (
-      <main className="mx-auto max-w-xl px-4 py-12 text-center">
+      <main className="mx-auto max-w-xl px-4 py-12 text-center sm:px-6">
         <div className="card p-8">
           <AlertCircle className="h-12 w-12 mx-auto text-destructive" />
           <h2 className="mt-4 text-xl font-extrabold">عذراً، لا يمكن الوصول إلى هذا الامتحان</h2>
@@ -190,7 +190,7 @@ export function ExamStartPage() {
   if (!exam) return <Spinner />
 
   return (
-    <main className="mx-auto max-w-xl px-4 py-8">
+    <main className="mx-auto max-w-xl px-4 py-8 sm:px-6">
       <div className="mb-6 flex justify-center">
         <BrandLogo variant="stacked" height={104} />
       </div>
@@ -200,7 +200,7 @@ export function ExamStartPage() {
       {exam.instructions ? (
         <Card className="p-4 border-border bg-muted/30">
           <h3 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">تعليمات سريعة</h3>
-          <p className="mt-2 text-sm leading-relaxed">{exam.instructions}</p>
+          <p className="mt-2 text-sm leading-relaxed sm:text-base">{exam.instructions}</p>
         </Card>
       ) : null}
 

@@ -33,7 +33,7 @@ const features = [
 
 export function HomePage() {
   return (
-    <main className="mx-auto max-w-4xl px-4 py-10 sm:py-16">
+    <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-16">
       <section className="text-center">
         <h1 className="text-4xl font-extrabold sm:text-5xl">منصة التقييم للتوظيف</h1>
         <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
@@ -55,7 +55,7 @@ export function HomePage() {
               <f.icon className={`h-6 w-6 ${f.iconText}`} />
             </span>
             <h2 className="mt-4 text-lg font-extrabold">{f.title}</h2>
-            <p className="mt-1 text-sm text-muted-foreground">{f.desc}</p>
+            <p className="mt-1 text-sm text-muted-foreground sm:text-base">{f.desc}</p>
             <span className={`badge ${f.cls} mt-4`}>{f.title}</span>
           </Card>
         ))}
@@ -64,7 +64,7 @@ export function HomePage() {
       <section className="card mt-10 flex flex-col items-center gap-3 p-8 text-center">
         <ClipboardList className="h-8 w-8 text-primary" />
         <p className="font-bold">كيف يعمل؟</p>
-        <p className="max-w-lg text-sm text-muted-foreground">
+        <p className="max-w-lg text-sm text-muted-foreground sm:text-base">
           افتح رابط الامتحان، أدخل اسمك ثم ابدأ. بعد التسليم تحصل على النتيجة مباشرةً، ويمكن للمدير تفعيل
           مراجعة الإجابات والتصحيح لكل سؤال حسب إعدادات الامتحان.
         </p>

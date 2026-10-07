@@ -390,8 +390,8 @@ export function AdminExamsPage() {
   if (loading) return <Spinner />
   if (error && !exams.length && !showForm) return <p className="p-10 text-center text-destructive">{error}</p>
 
-  const activeClass = 'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-bold border border-success/40 bg-success/10 text-[#15803d]'
-  const inactiveClass = 'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-bold border border-border bg-muted text-muted-foreground'
+  const activeClass = 'inline-flex min-h-[40px] items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold border border-success/40 bg-success/10 text-[#15803d]'
+  const inactiveClass = 'inline-flex min-h-[40px] items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold border border-border bg-muted text-muted-foreground'
 
   return (
     <div className="mx-auto max-w-4xl">
@@ -463,7 +463,7 @@ export function AdminExamsPage() {
           </div>
 
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <label className="label">الأقسام وعدد الأسئلة *</label>
               <Button variant="ghost" onClick={addSection}><Plus className="h-4 w-4" /> قسم إضافي</Button>
             </div>
@@ -486,7 +486,7 @@ export function AdminExamsPage() {
                   </label>
 
                   {s.graded ? (
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <label className="flex items-center gap-1">
                         <span className="text-xs font-bold text-muted-foreground">سهل</span>
                         <input type="number" min={0} max={50} className="input w-16" value={s.easy} onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateSection(i, 'easy', e.target.value)} />
@@ -501,7 +501,7 @@ export function AdminExamsPage() {
                       </label>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-1">
+                    <div className="flex flex-wrap items-center gap-1">
                       <input type="number" min={1} max={50} className="input w-20" value={s.question_count} onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateSection(i, 'question_count', e.target.value)} />
                       <span className="text-xs font-bold text-muted-foreground">سؤال</span>
                     </div>
@@ -513,7 +513,7 @@ export function AdminExamsPage() {
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-3 border-t border-border pt-4">
+          <div className="flex flex-wrap items-center justify-end gap-2 border-t border-border pt-4 sm:gap-3">
             <Button variant="outline" onClick={cancelForm}>إلغاء</Button>
             <Button onClick={saveExam} disabled={saving}>{saving ? 'جارٍ الحفظ…' : (editingId ? 'تحديث الامتحان' : 'إنشاء الامتحان')}</Button>
           </div>
@@ -581,29 +581,31 @@ export function AdminExamsPage() {
                         {exam.is_active ? 'نشط' : 'غير نشط'}
                       </button>
                     </td>
-                    <td className="p-3 space-x-1">
-                      <Link to={`/admin/exams/${exam.id}/attempts`} className="btn btn-outline px-2 py-1" title="عرض المرشحين والنتائج">
-                        <Users className="h-4 w-4" />
-                      </Link>
-                      {exam.is_active && (
-                        <Button variant="outline" onClick={() => copyLink(exam)} title="نسخ الرابط">
-                          <Copy className="h-4 w-4" />
-                        </Button>
-                      )}
-                      {editingId !== exam.id && (
-                        <Button variant="outline" onClick={() => openEdit(exam)}>
-                          <Edit2 className="h-4 w-4" />
-                        </Button>
-                      )}
-                      {deletingId === exam.id ? (
-                        <Button variant="danger" onClick={() => confirmDelete(exam.id)}>
-                          <RotateCcw className="h-4 w-4" /> تأكيد الحذف
-                        </Button>
-                      ) : (
-                        <Button variant="ghost" onClick={() => setDeletingId(exam.id)} className="text-destructive">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
+                    <td className="p-3">
+                      <div className="flex flex-nowrap flex-row items-center gap-1.5 whitespace-nowrap">
+                        <Link to={`/admin/exams/${exam.id}/attempts`} className="btn btn-outline px-2 py-1" title="عرض المرشحين والنتائج">
+                          <Users className="h-4 w-4" />
+                        </Link>
+                        {exam.is_active && (
+                          <Button variant="outline" onClick={() => copyLink(exam)} title="نسخ الرابط">
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {editingId !== exam.id && (
+                          <Button variant="outline" onClick={() => openEdit(exam)}>
+                            <Edit2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {deletingId === exam.id ? (
+                          <Button variant="danger" onClick={() => confirmDelete(exam.id)}>
+                            <RotateCcw className="h-4 w-4" /> تأكيد الحذف
+                          </Button>
+                        ) : (
+                          <Button variant="ghost" onClick={() => setDeletingId(exam.id)} className="text-destructive">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 )

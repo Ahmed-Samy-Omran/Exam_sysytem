@@ -77,7 +77,7 @@ export function QuizRunnerPage() {
 
   if (error) {
     return (
-      <main className="mx-auto max-w-lg px-4 py-16 text-center">
+      <main className="mx-auto max-w-lg px-4 py-16 text-center sm:px-6">
         <p className="font-bold text-destructive">{error}</p>
         <a href="#/" className="btn btn-primary mt-6">العودة للرئيسية</a>
       </main>
@@ -119,7 +119,7 @@ export function QuizRunnerPage() {
   }
 
   return (
-    <main className="mx-auto max-w-2xl px-4 py-6">
+    <main className="mx-auto max-w-2xl px-4 py-6 sm:px-6">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <Badge className={categoryBadgeClass(current.category_name ?? current.category_id)}>{current.category_name ?? 'سؤال'}</Badge>
@@ -168,7 +168,7 @@ export function QuizRunnerPage() {
         </div>
       </Card>
 
-      <div className="mt-6 flex items-center justify-between gap-3">
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-2 sm:gap-3">
         <Button variant="outline" onClick={() => goTo(index - 1)} disabled={index === 0}>
           السابق
         </Button>
@@ -193,7 +193,7 @@ export function QuizRunnerPage() {
                 type="button"
                 onClick={() => goTo(i)}
                 aria-label={`السؤال ${i + 1}${done ? ' (أُجيب)' : ''}`}
-                className={`h-9 w-9 cursor-pointer rounded-lg border text-sm font-bold transition-colors ${
+                className={`h-10 w-10 cursor-pointer rounded-lg border text-sm font-bold transition-colors ${
                   isCurrent
                     ? 'border-primary bg-primary text-on-primary'
                     : done

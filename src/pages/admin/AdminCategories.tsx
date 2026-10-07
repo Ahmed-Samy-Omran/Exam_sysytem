@@ -90,15 +90,15 @@ export function AdminCategoriesPage() {
           <input className="input" dir="ltr" placeholder="slug (مثال: accounting)" value={newDraft.slug} onChange={(e) => setNewDraft({ ...newDraft, slug: e.target.value })} />
           <input className="input sm:col-span-2" placeholder="وصف مختصر" value={newDraft.description} onChange={(e) => setNewDraft({ ...newDraft, description: e.target.value })} />
         </div>
-        <div className="flex items-center gap-3">
-          <div className="flex gap-1.5">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap gap-2">
             {ACCENTS.map((c) => (
               <button
                 key={c}
                 type="button"
                 aria-label={`لون ${c}`}
                 onClick={() => setNewDraft({ ...newDraft, accent_color: c })}
-                className={`h-7 w-7 cursor-pointer rounded-full border-2 ${newDraft.accent_color === c ? 'border-foreground' : 'border-transparent'}`}
+                className={`h-10 w-10 cursor-pointer rounded-full border-2 ${newDraft.accent_color === c ? 'border-foreground' : 'border-transparent'}`}
                 style={{ backgroundColor: c }}
               />
             ))}
@@ -114,7 +114,7 @@ export function AdminCategoriesPage() {
         <p className="text-muted-foreground">لا توجد أقسام بعد.</p>
       ) : (
         <Card className="overflow-x-auto">
-          <table className="w-full min-w-[680px] text-sm">
+          <table className="w-full min-w-[880px] text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/40 text-muted-foreground">
                 <th className="p-3 text-start font-bold">الاسم</th>
@@ -135,14 +135,14 @@ export function AdminCategoriesPage() {
                     <input className="input" dir="ltr" value={d.slug} onChange={(e) => patch(d.id!, { slug: e.target.value })} />
                   </td>
                   <td className="p-3">
-                    <div className="flex flex-wrap gap-1.5">
+                    <div className="flex flex-wrap gap-2">
                       {ACCENTS.map((c) => (
                         <button
                           key={c}
                           type="button"
                           aria-label={`لون ${c}`}
                           onClick={() => patch(d.id!, { accent_color: c })}
-                          className={`h-6 w-6 cursor-pointer rounded-full border-2 ${d.accent_color === c ? 'border-foreground' : 'border-transparent'}`}
+                          className={`h-10 w-10 cursor-pointer rounded-full border-2 ${d.accent_color === c ? 'border-foreground' : 'border-transparent'}`}
                           style={{ backgroundColor: c }}
                         />
                       ))}

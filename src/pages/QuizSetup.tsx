@@ -107,7 +107,7 @@ export function QuizSetupPage() {
   if (error && !cats.length) return <p className="p-10 text-center text-destructive">{error}</p>
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-8">
+    <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
       <PageHeader title="إعداد الاختبار" subtitle="اختر الأقسام وعدد الأسئلة ثم أنشئ رابط الامتحان لإرساله للمتقدمين" />
 
       <Card className="p-5">
@@ -152,7 +152,7 @@ export function QuizSetupPage() {
             <label className="label">عدد الأسئلة لكل قسم</label>
             <div className="space-y-3">
               {(mode === 'all' ? activeCats : activeCats.filter((c) => c.slug === selectedSlug)).map((c) => (
-                <div key={c.slug} className="flex items-center justify-between rounded-xl border border-border bg-card p-3">
+                <div key={c.slug} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-card p-3">
                   <div className="flex items-center gap-2">
                     <Badge className={categoryBadgeClass(c.slug)}>{c.name}</Badge>
                   </div>
@@ -161,7 +161,7 @@ export function QuizSetupPage() {
                       type="button"
                       aria-label={`إنقاص أسئلة ${c.name}`}
                       onClick={() => setCount(c.slug, counts[c.slug] - 1)}
-                      className="h-8 w-8 cursor-pointer rounded-lg border border-border hover:bg-muted"
+                      className="h-10 w-10 cursor-pointer rounded-lg border border-border hover:bg-muted"
                     >
                       −
                     </button>
@@ -170,7 +170,7 @@ export function QuizSetupPage() {
                       type="button"
                       aria-label={`زيادة أسئلة ${c.name}`}
                       onClick={() => setCount(c.slug, counts[c.slug] + 1)}
-                      className="h-8 w-8 cursor-pointer rounded-lg border border-border hover:bg-muted"
+                      className="h-10 w-10 cursor-pointer rounded-lg border border-border hover:bg-muted"
                     >
                       +
                     </button>

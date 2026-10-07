@@ -108,6 +108,7 @@
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
+    min-height: 40px;
     border-radius: 0.75rem;
     padding: 0.625rem 1.25rem;
     font-weight: 700;
@@ -169,6 +170,11 @@
     line-height: 1.5;
   }
 
+  button.badge {
+    min-height: 40px;
+    cursor: pointer;
+  }
+
   .badge-accounting {
     background-color: rgb(22 163 74 / 0.12);
     color: #147739;
@@ -196,6 +202,7 @@
 
   .input {
     width: 100%;
+    min-height: 40px;
     border: 1px solid var(--color-border);
     border-radius: 0.75rem;
     padding: 0.625rem 0.875rem;
