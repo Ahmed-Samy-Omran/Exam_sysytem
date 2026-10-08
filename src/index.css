@@ -224,8 +224,11 @@
     color: var(--color-muted-foreground);
   }
 
-  .input:focus {
+  .input:focus,
+  .input:focus-visible {
+    outline: none;
     border-color: var(--color-brand-orange);
+    box-shadow: 0 0 0 2px rgb(244 142 32 / 0.2);
   }
 
   .label {
