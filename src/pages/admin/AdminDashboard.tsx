@@ -32,7 +32,7 @@ export function AdminDashboardPage() {
     { label: 'الأقسام', value: stats.categories, icon: Tags },
     { label: 'أسئلة نشطة', value: stats.activeQuestions, icon: ListChecks },
     ...(stats.attempts > 0 ? [{ label: 'محاولات مكتملة', value: stats.attempts, icon: Timer }] : []),
-    ...(stats.avgScore != null ? [{ label: 'متوسط الدرجات', value: formatPercent(stats.avgScore), icon: Percent }] : []),
+    ...(stats.avgScore != null ? [{ label: 'متوسط الدرجات', value: formatPercent(stats.avgScore), icon: Percent, accent: true }] : []),
   ]
 
   return (
@@ -44,7 +44,11 @@ export function AdminDashboardPage() {
             key={c.label}
             className="flex w-full max-w-full items-center gap-2.5 p-2.5 sm:gap-3 sm:p-5"
           >
-            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary sm:h-11 sm:w-11">
+            <span
+              className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl sm:h-11 sm:w-11 ${
+                c.accent ? 'bg-brand-orange/15 text-brand-orange-deep' : 'bg-primary/10 text-primary'
+              }`}
+            >
               <c.icon className="h-5 w-5" />
             </span>
             <div className="min-w-0 flex-1">

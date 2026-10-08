@@ -564,7 +564,11 @@ export function AdminExamsPage() {
                         <>
                           <span className="font-extrabold">{summary.attempts}</span>
                           <span className="ms-1 text-xs font-bold text-muted-foreground">
-                            ({summary.completed} مكتملة{summary.inProgress > 0 ? ` · ${summary.inProgress} جارية` : ''})
+                            ({summary.completed} مكتملة
+                            {summary.inProgress > 0 ? (
+                              <span className="text-brand-orange-deep"> · {summary.inProgress} جارية</span>
+                            ) : null}
+                            )
                           </span>
                         </>
                       ) : (

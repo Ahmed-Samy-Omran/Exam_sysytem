@@ -207,7 +207,7 @@ export function ExamStartPage() {
       {completedNotice ? (
         <div
           role="alert"
-          className="mt-4 rounded-lg border border-amber-300/60 bg-amber-500/10 p-4 text-sm font-bold text-amber-800"
+          className="mt-4 rounded-lg border border-brand-orange/60 bg-brand-orange/10 p-4 text-sm font-bold text-brand-orange-deep"
         >
           {completedNotice}
         </div>

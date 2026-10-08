@@ -119,7 +119,7 @@ export function QuizResultPage() {
                 <Card key={item.question.question_id} className="overflow-hidden">
                   <div className="flex items-start justify-between gap-3 p-5 pb-3">
                     <p className="font-bold leading-relaxed">{item.question.question_text}</p>
-                    <Badge className={item.is_correct ? 'badge-success' : 'badge-destructive'}>
+                    <Badge className={item.is_correct ? 'badge-success' : item.answered ? 'badge-destructive' : 'badge-warning'}>
                       {item.is_correct ? 'صحيح' : item.answered ? 'خطأ' : 'غير مجاب'}
                     </Badge>
                   </div>

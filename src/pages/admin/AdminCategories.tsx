@@ -3,7 +3,7 @@ import { Plus, Save } from 'lucide-react'
 import { Button, Card, PageHeader } from '@/components/ui'
 import { getRepository } from '@/lib/repository/factory'
 
-const ACCENTS = ['#1A6AA6', '#16A34A', '#7C3AED', '#EA580C', '#DC2626', '#0284C7']
+const ACCENTS = ['#1A6AA6', '#16A34A', '#7C3AED', '#F48E20', '#EA580C', '#DC2626', '#0284C7']
 
 interface Draft {
   id?: string
@@ -114,7 +114,7 @@ export function AdminCategoriesPage() {
         <p className="text-muted-foreground">لا توجد أقسام بعد.</p>
       ) : (
         <Card className="overflow-x-auto">
-          <table className="w-full min-w-[880px] text-sm">
+          <table className="w-full min-w-[960px] text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/40 text-muted-foreground">
                 <th className="p-3 text-start font-bold">الاسم</th>

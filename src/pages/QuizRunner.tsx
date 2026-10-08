@@ -130,7 +130,7 @@ export function QuizRunnerPage() {
         {remaining != null ? (
           <span
             className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-sm font-bold ${
-              remaining <= 60 ? 'border-amber-300 bg-amber-50 text-amber-700' : 'border-border bg-card'
+              remaining <= 60 ? 'border-brand-orange/60 bg-brand-orange/10 text-brand-orange-deep' : 'border-border bg-card'
             }`}
             dir="ltr"
           >
@@ -227,7 +227,7 @@ export function QuizRunnerPage() {
           أنت على وشك تسليم الاختبار. <span className="font-bold">{answeredCount}</span> من{' '}
           {questions.length} سؤال تمت الإجابة عنها.
         </p>
-        {remaining === 0 ? <p className="mt-2 text-sm font-bold text-amber-700">انتهى الوقت المحدد.</p> : null}
+        {remaining === 0 ? <p className="mt-2 text-sm font-bold text-brand-orange-deep">انتهى الوقت المحدد.</p> : null}
         <p className="mt-1 text-xs text-muted-foreground">
           <CheckCircle2 className="inline h-4 w-4" /> لا يمكن التراجع بعد التسليم.
         </p>

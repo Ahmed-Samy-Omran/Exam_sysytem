@@ -8,7 +8,7 @@ import type { AttemptRow } from '@/types'
 
 const STATUS_LABEL: Record<string, { label: string; cls: string }> = {
   submitted: { label: 'مكتمل', cls: 'badge-success' },
-  in_progress: { label: 'قيد التنفيذ', cls: 'badge-muted' },
+  in_progress: { label: 'قيد التنفيذ', cls: 'badge-warning' },
   abandoned: { label: 'متوقف', cls: 'badge-destructive' },
 }
 

@@ -8,7 +8,7 @@ import type { AdminAttemptDetails } from '@/types'
 
 const STATUS_LABEL: Record<string, { label: string; cls: string }> = {
   submitted: { label: 'مكتمل', cls: 'badge-success' },
-  in_progress: { label: 'قيد التنفيذ', cls: 'badge-muted' },
+  in_progress: { label: 'قيد التنفيذ', cls: 'badge-warning' },
   abandoned: { label: 'متوقف', cls: 'badge-destructive' },
 }
 
@@ -120,7 +120,7 @@ export function AdminAttemptDetailsPage() {
         ) : (
           <div className="space-y-4">
           {details.review.map((item, i) => {
-            const statusClass = item.is_correct ? 'badge-success' : item.answered ? 'badge-destructive' : 'badge-muted'
+            const statusClass = item.is_correct ? 'badge-success' : item.answered ? 'badge-destructive' : 'badge-warning'
             const statusLabel = item.is_correct ? 'صحيح' : item.answered ? 'خطأ' : 'غير مجاب'
             return (
               <Card key={`${item.question.question_id}-${i}`} className="overflow-hidden">

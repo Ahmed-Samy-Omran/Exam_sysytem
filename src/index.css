@@ -11,7 +11,9 @@
   --color-muted: #e7eef7;
   --color-muted-foreground: #4a5f7a;
   --color-border: #b3cdea;
-  --color-accent: #f48e20;
+  --color-brand-orange: #f48e20;
+  --color-brand-orange-deep: #a24a08;
+  --color-accent: var(--color-brand-orange);
   --color-destructive: #dc2626;
   --color-success: #16a34a;
   --color-ring: #1a6aa6;
@@ -80,7 +82,10 @@
 
   :focus-visible {
     outline: none;
-    box-shadow: 0 0 0 2px var(--color-background), 0 0 0 4px var(--color-ring);
+    box-shadow:
+      0 0 0 2px var(--color-background),
+      0 0 0 4px var(--color-ring),
+      0 0 0 6px var(--color-brand-orange);
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -200,6 +205,11 @@
     color: #b91c1c;
   }
 
+  .badge-warning {
+    background-color: rgb(244 142 32 / 0.14);
+    color: var(--color-brand-orange-deep);
+  }
+
   .input {
     width: 100%;
     min-height: 40px;
@@ -212,6 +222,10 @@
   }
   .input::placeholder {
     color: var(--color-muted-foreground);
+  }
+
+  .input:focus {
+    border-color: var(--color-brand-orange);
   }
 
   .label {

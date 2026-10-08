@@ -24,7 +24,7 @@ export function Navbar() {
           <BrandLogo variant="horizontal" height={40} />
         </Link>
 
-        <span className="h-6 w-px bg-border" aria-hidden />
+        <span className="h-6 w-px bg-brand-orange/70" aria-hidden />
 
         <span className="min-w-0">
           <span className="block truncate text-sm leading-tight font-extrabold">
