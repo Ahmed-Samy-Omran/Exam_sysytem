@@ -1,14 +1,16 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Button, Card, Field, PageHeader } from '@/components/ui'
+import { Button, Card, Field, PageHeader, Spinner } from '@/components/ui'
 import { BrandLogo } from '@/components/BrandLogo'
-import { getMode, getRepository } from '@/lib/repository/factory'
+import { getMode } from '@/lib/repository/factory'
+import { useAuth } from '@/context/auth'
 
 const MOCK_DEMO = { user: 'omar', pass: 'omar369@' }
 const SUPABASE_DEMO = { user: 'omar@exam.com', pass: 'omar369@' }
 
 export function AdminLoginPage() {
   const nav = useNavigate()
+  const { login, loading } = useAuth()
   const isMock = getMode() === 'mock'
   const demo = isMock ? MOCK_DEMO : SUPABASE_DEMO
   const [username, setUsername] = useState('')
@@ -16,18 +18,20 @@ export function AdminLoginPage() {
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
-  async function login() {
+  async function submit() {
     setBusy(true)
     setError(null)
     try {
-      await getRepository().signInAdmin(username, password)
-      nav('/admin')
+      await login(username, password)
+      nav('/admin', { replace: true })
     } catch (e) {
       setError(e instanceof Error ? e.message : 'فشل تسجيل الدخول')
     } finally {
       setBusy(false)
     }
   }
+
+  if (loading) return <Spinner />
 
   return (
     <main className="flex min-h-[80vh] items-center justify-center px-4 sm:px-6">
@@ -50,7 +54,7 @@ export function AdminLoginPage() {
             <input className="input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
           </Field>
           {error ? <p role="alert" className="text-sm font-bold text-destructive">{error}</p> : null}
-          <Button onClick={login} disabled={busy || !username || !password} className="w-full">
+          <Button onClick={submit} disabled={busy || !username || !password} className="w-full">
             {busy ? 'جارٍ الدخول…' : 'دخول'}
           </Button>
           <div className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-xs leading-relaxed">

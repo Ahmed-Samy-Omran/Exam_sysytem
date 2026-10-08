@@ -17,37 +17,48 @@ import { AdminExamAttemptsPage } from '@/pages/admin/AdminExamAttempts'
 import { NotFoundPage } from '@/pages/NotFound'
 import { PublicLayout } from '@/components/PublicLayout'
 import { ExamStartPage } from '@/pages/ExamStartPage'
+import { AuthProvider } from '@/context/AuthContext'
+import { ProtectedRoute } from '@/components/ProtectedRoute'
 
 const AboutPage = lazy(() => import('@/pages/About').then((m) => ({ default: m.AboutPage })))
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <Suspense fallback={null}>
-        <Routes>
-          <Route element={<PublicLayout />}>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/quiz/:attemptId/result" element={<QuizResultPage />} />
-            <Route path="/exam/start" element={<ExamStartPage />} />
-          </Route>
-          <Route path="/quiz/:attemptId" element={<QuizRunnerPage />} />
-          <Route path="/admin/login" element={<AdminLoginPage />} />
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<AdminDashboardPage />} />
-            <Route path="setup" element={<QuizSetupPage />} />
-            <Route path="questions" element={<AdminQuestionsPage />} />
-            <Route path="questions/new" element={<AdminQuestionFormPage />} />
-            <Route path="questions/:id/edit" element={<AdminQuestionFormPage />} />
-            <Route path="categories" element={<AdminCategoriesPage />} />
-            <Route path="settings" element={<AdminSettingsPage />} />
-            <Route path="exams" element={<AdminExamsPage />} />
-            <Route path="exams/:examId/attempts" element={<AdminExamAttemptsPage />} />
-            <Route path="attempts/:attemptId" element={<AdminAttemptDetailsPage />} />
-          </Route>
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
-      </Suspense>
-    </div>
+    <AuthProvider>
+      <div className="min-h-screen bg-background text-foreground">
+        <Suspense fallback={null}>
+          <Routes>
+            <Route element={<PublicLayout />}>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/about" element={<AboutPage />} />
+              <Route path="/quiz/:attemptId/result" element={<QuizResultPage />} />
+              <Route path="/exam/start" element={<ExamStartPage />} />
+            </Route>
+            <Route path="/quiz/:attemptId" element={<QuizRunnerPage />} />
+            <Route path="/admin/login" element={<AdminLoginPage />} />
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute>
+                  <AdminLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<AdminDashboardPage />} />
+              <Route path="setup" element={<QuizSetupPage />} />
+              <Route path="questions" element={<AdminQuestionsPage />} />
+              <Route path="questions/new" element={<AdminQuestionFormPage />} />
+              <Route path="questions/:id/edit" element={<AdminQuestionFormPage />} />
+              <Route path="categories" element={<AdminCategoriesPage />} />
+              <Route path="settings" element={<AdminSettingsPage />} />
+              <Route path="exams" element={<AdminExamsPage />} />
+              <Route path="exams/:examId/attempts" element={<AdminExamAttemptsPage />} />
+              <Route path="attempts/:attemptId" element={<AdminAttemptDetailsPage />} />
+            </Route>
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
+        </Suspense>
+      </div>
+    </AuthProvider>
   )
 }
