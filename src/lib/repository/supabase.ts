@@ -93,8 +93,12 @@ export function toError(error: unknown, context?: string): Error {
   if (error && typeof error === 'object') {
     const e = error as DbErrorLike
     const code = e.code ? ` (${e.code})` : ''
-    const message = e.message?.trim() || e.details?.trim() || e.hint?.trim()
-    text = message ? `${message}${code}` : 'خطأ غير معروف في قاعدة البيانات'
+    if (e.code === 'PGRST303') {
+      text = `تعذر التحقق من الجلسة بسبب انزياح مؤقت في التوقيت — أعد المحاولة${code}`
+    } else {
+      const message = e.message?.trim() || e.details?.trim() || e.hint?.trim()
+      text = message ? `${message}${code}` : 'خطأ غير معروف في قاعدة البيانات'
+    }
   } else {
     text = String(error ?? 'خطأ غير معروف')
   }

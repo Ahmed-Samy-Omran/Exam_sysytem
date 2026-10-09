@@ -39,4 +39,22 @@ describe('toError', () => {
       'إنشاء الامتحان: permission denied (42501)',
     )
   })
+
+  it('يحول PGRST303 إلى رسالة ودّية بدل النص الإنجليزي الخام', () => {
+    const err = toError({ message: 'JWT issued at future', code: 'PGRST303' })
+
+    expect(err.message).toContain('انزياح مؤقت في التوقيت')
+    expect(err.message).toContain('أعد المحاولة')
+    expect(err.message).toContain('PGRST303')
+    expect(err.message).not.toContain('JWT issued at future')
+    expect((err as Error & { code?: string }).code).toBe('PGRST303')
+  })
+
+  it('يحول PGRST303 مع سياق العملية مع الاحتفاظ بالسبب', () => {
+    const err = toError({ message: 'JWT issued at future', code: 'PGRST303' }, 'إحصاءات اللوحة')
+
+    expect(err.message).toContain('إحصاءات اللوحة')
+    expect(err.message).toContain('PGRST303')
+    expect(err.message).not.toContain('JWT issued at future')
+  })
 })
